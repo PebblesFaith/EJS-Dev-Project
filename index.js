@@ -202,7 +202,7 @@ app.get('/error500', (req, res) => {
 
 // Define a route for the forgot password page
 app.get('/forgotPassword', (req, res) => {
-    if (req.isUnauthenticated()) {
+    if (req.isAuthenticated()) {
         res.render('forgotPassword');
     } else {
         res.render('error404');
@@ -229,7 +229,7 @@ app.get('/home', (req, res) => {
 
 // Define a route for the verify email page
 app.get('/verifyEmail', (req, res) => {
-    if (req.isUnauthenticated()) {
+    if (req.isAuthenticated()) {
         res.render('verifyEmail');
     } else {
         res.render('error404'); 
@@ -237,7 +237,7 @@ app.get('/verifyEmail', (req, res) => {
 });
 
 app.get('/signup', (req, res) => {
-    if (req.isUnauthenticated()) {
+    if (req.isAuthenticated()) {
         res.render('signup', {text: 'This is a EJS tutorial example'});
     } else {
         res.render('error404');
@@ -282,7 +282,7 @@ app.get('/logout', (req, res) => {
 
 // Define a route for the login page
 app.get('/login', (req, res) => {
-    if (req.isUnauthenticated()) {
+    if (req.isAuthenticated()) {
         res.render('login');
     } else {
         res.render('dashboard');
