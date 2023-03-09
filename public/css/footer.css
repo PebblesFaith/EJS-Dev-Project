@@ -1,0 +1,100 @@
+/* To style the hr line attribute's ID element for which will add decorative designs' sets of 
+   appearance to the horizontal rule line. */
+   hr#red_line {
+	border: 2px solid rgb(144, 34, 34);
+}
+
+/* To style the hr line attribute's ID element for which will add decorative designs' sets of 
+   appearance to the horizontal rule line. */
+hr#blue_line {
+	border: 2px solid rgb(32, 18, 135);
+}
+
+/* To create a flex item columns boxes to which will allows the columns' values to shrink and expand
+   to their appropriate fitted space for storing and styling iVoteBallot's social medias links and policies information. */
+   #socialMedias_01 {
+    display: flex;
+    flex-flow: row wrap;   
+    align-items: center;
+    justify-content: space-around;
+    padding: 14px 14px;
+    cursor: pointer;
+    cursor: 14px;
+    list-style: none;   
+    background-color: transparent;  
+    width: auto;   
+    font-family: Cambria, Cochin, Georgia, Times, 'Times New Roman', serif;
+    font-size: clamp(12px, 1.5vw, 15px); 
+    text-align: center;   
+}
+
+/* To style HTML tag (img) for which will add decorative designs sets of resizes to shrink and expand  
+   to the iVoteBallot's social medias flex boxes. */
+img {
+    width: clamp(15px, 3vw, 25px);    
+}
+
+/* To style the attribute's element for which will add decorative designs' sets of appearance  
+   to the hyperlink texts. */
+#socialMedias_01 a {    
+    text-decoration: none;
+    display: block;
+    background-color: inherit;
+    padding: 15px;
+    color: rgb(144, 34, 34);
+}
+
+/* To style the attribute's element for which will add decorative designs' sets of appearance to the 
+   font hover hyperlink texts. */
+#socialMedias_01 a:hover {
+    background-color: rgba(226, 232, 249, 0.5);
+    color: rgb(32, 18, 135);
+}
+
+/* To create a main flex container box column with a set of values of the area container to 
+   which will displays properties and, houses within the main flex container box two children
+   which are call flex items (left and right containers. */
+#footer_flex_container > ul li img {
+    display: -webkit-flex;
+    -webkit-flex-wrap: wrap;    
+    flex-wrap: wrap;
+    flex-direction: row;
+    background-color: transparent;
+    align-items: center;
+    justify-content: center;
+}
+
+/* To create a flex item column box to which will allows the column's values to shrink and expand
+   to their appropriate fitted space for storing and styling iVoteBallot's footer insignia. */
+#iVoteBallot_Footer_Insignia_01 {
+    display: flex;
+    flex-flow: row wrap;
+    align-items: center;
+    justify-content: space-around;
+    padding: 4px 14px;    
+    list-style: none;   
+    background-color: rgb(201, 24, 24);
+    width: auto;
+    font-family: 'Megrim-Regular', Cambria, Cochin, Georgia, Times, 'Times New Roman', serif;
+    font-size: clamp(12px, 1vw, 50px); 
+    margin-top: 0px; 
+    margin-bottom: 0px;  
+}
+
+/* To style form attribute's element for which will add decorative designs' sets of appearance  
+   to the hyperlink texts. */
+#iVoteBallot_Footer_Insignia_01 a {    
+    text-decoration: none;    
+    padding: 5px;
+    color: rgb(255, 255, 255);
+    text-align: center;
+    padding: 10px;   
+}
+
+/* To style form attribute's element for which will add decorative designs' sets of appearance in order
+   to allow sturctual pseduo class to the style content based on it relationship with its parent and sibling
+   from the hyperlink text. */
+#iVoteBallot_Footer_Insignia_01 li:last-of-type a {
+    border-bottom: none;
+}
+
