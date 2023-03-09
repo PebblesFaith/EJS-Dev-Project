@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Log Out</title>
+</head>
+	<body>
+
+		<header>
+			<%- include('../common/header') %>
+		</header>
+
+		<h1>Sign Out</h1>
+
+		<form action="/logout?_method=DELETE" method="POST" >
+			<h2>
+				You have successfully logout of your iVoteBallot's Dashboard.
+				<br>
+				<br>
+			
+			</h2>
+
+			<a href="/home">Home Page</a>
+
+		<footer>
+			<%- include('../common/footer') %>
+		</footer>
+
+		<script type="text/javascript">
+
+			const validated = (e) => { 
+			
+			e.preventDefault();  
+			
+			form.addEventListener('submit', validated);
+			return true;  
+			
+			} 		
+
+		</script>	
+	</body>
+</html>
