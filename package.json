@@ -1,0 +1,23 @@
+{
+  "name": "ejs-dev-project",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "nodemon index.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/PebblesFaith/EJS-Dev-Project.git"
+  },
+  "author": "Sarai Hannah Ajai",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/PebblesFaith/EJS-Dev-Project/issues"
+  },
+  "homepage": "https://github.com/PebblesFaith/EJS-Dev-Project#readme",
+  "devDependencies": {
+    "nodemon": "^2.0.21"
+  }
+}
