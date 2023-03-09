@@ -237,7 +237,7 @@ app.get('/verifyEmail', (req, res) => {
 });
 
 app.get('/signup', (req, res) => {
-    if (req.isAuthenticated()) {
+    if (req.isUnauthenticated()) {
         res.render('signup', {text: 'This is a EJS tutorial example'});
     } else {
         res.render('error404');
@@ -273,7 +273,7 @@ app.delete('/logout', (req, res) => {
 
 // Define a route for the logout page
 app.get('/logout', (req, res) => {
-    if (req.isUnauthenticated()) {
+    if (req.isAuthenticated()) {
         res.render('logout');
     } else {
         res.render('error404');
@@ -375,9 +375,7 @@ app.post('/signup', async(req, res) => {
                 res.render('login');
             }
         });
-    });             
-
-   
+    });     
 
 app.post('/login', passport.authenticate('local', {
     successRedirect: 'dashboard',
