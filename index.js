@@ -244,6 +244,7 @@ app.get('/signup', (req, res) => {
     }
 })
 
+
 // Delete a route for the logout page
 app.delete('/logout', (req, res) => {  
     if (req.isAuthenticated()) {
