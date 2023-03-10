@@ -634,6 +634,19 @@ app.get('/dashboard', (req, res) => {
     }
 });
 
+/*
+The code creates a new instance of the SQLite3 Database using the sqlite3 module in JavaScript. 
+The first argument passed to the constructor is the name of the database file to create or 
+connect to. In this case, the name of the database file is 'users.db'. If there is an error
+during the database connection, the error message will be logged to the console with an 
+appropriate message. If the connection is successful, a message will be logged to the console
+indicating that the connection has been established successfully. The created instance of the 
+SQLite3 database can be used to perform database operations such as inserting, updating, or
+querying data.
+
+This code is useful for developers who want to use a lightweight, serverless SQLite3 database
+for their JavaScript application without the need for a separate server or installation process.
+*/
 const db1 = new sqlite3.Database('users.db', err => {
     if (err) {
         console.log('Developer has created the SQLite3 database connection from her JavaScript codes language which has a generated an error, as ' + err + '.');
@@ -642,7 +655,23 @@ const db1 = new sqlite3.Database('users.db', err => {
     }
 });
 
-// Set up the User Schema
+/*
+The given JavaScript codes language creates a SQLite3 database table named "users"
+if it does not already exist. The "users" table has seven columns, including an 
+auto-incrementing primary key column named "id", and six other columns that store 
+user information such as first name, last name, username, email, password, and 
+confirm password. The first name, last name, username, email, password, and confirm
+password columns are all required and have maximum length limits of 25, 50, and 150
+characters, respectively.
+
+The "serialize" function is called on the database instance, which ensures that all
+database queries within the function are executed sequentially and not concurrently.
+The "run" function is then used to execute the SQLite3 query that creates the "users"
+table, which is wrapped in a template string for easy readability and formatting.
+
+This code snippet is commonly used in web development to create a database table for
+storing user account information, which can be accessed and manipulated as needed.
+*/
 db1.serialize(() => {
     db1.run(`CREATE TABLE IF NOT EXISTS users (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -655,7 +684,28 @@ db1.serialize(() => {
     )`);
 });
 
-// Set up the route to handle users signup form.
+
+/*
+The given JavaScript codes language defines a route for signing up a new users using
+the HTTP POST method. When an user submits a signup form, the back-end server extracts 
+the form data (first name, last name, username, email, password, and confirmPassword) 
+from the request body using the req.body object.
+
+The JavaScript codes language then logs each user input to the console, and prints 
+their values using string concatenation. It also logs the req.session object, which
+may contain session data specific to the user.
+
+The user's password and confirm password fields are then hashed using the bcrypt
+algorithm, with the bcrypt library. The same salt is used to hash both fields, 
+and the hashed values are stored in separate variables. The two hashes are compared 
+using the bcrypt.compare() method to ensure they match, and if they do not, the user
+is redirected to the signup page with an error message.
+
+If the passwords match, the user's data is inserted into a SQLite3 database using an
+SQLite3 query. The query is executed using the db1.run() method, and the results are
+returned either as a successful redirect to the login page, or an error page if
+something goes wrong.
+*/
 app.post('/signup', async(req, res) => {
     const firstName = req.body.firstName;
     const lastName = req.body.lastName;
