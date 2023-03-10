@@ -336,6 +336,116 @@ methods in an Express.js application, making it easier to build RESTful APIs and
 */
 app.use(methodOverride('_method'));
 
+// Middleware to set req.isUnauthenticated for the first use of the '/dashboard' URL bar
+app.use('/dashboard', (req, res, next) => {
+    // Check if user is Already authenticated
+    if (!req.session.isAuthenticated) {
+        req.isUnauthenticated = true;        
+    }
+    next();
+});
+
+// Middleware to set req.isUnauthenticated for the first use of the '/error403' URL bar
+app.use('/error403', (req, res, next) => {
+    // Check if user is Already authenticated
+    if (!req.session.isAuthenticated) {
+        req.isUnauthenticated = true;        
+    }
+    next();
+});
+
+// Middleware to set req.isUnauthenticated for the first use of the '/error404' URL bar
+app.use('/error404', (req, res, next) => {
+    // Check if user is Already authenticated
+    if (!req.session.isAuthenticated) {
+        req.isUnauthenticated = true;        
+    }
+    next();
+});
+
+// Middleware to set req.isUnauthenticated for the first use of the '/error500' URL bar
+app.use('/error500', (req, res, next) => {
+    // Check if user is Already authenticated
+    if (!req.session.isAuthenticated) {
+        req.isUnauthenticated = true;        
+    }
+    next();
+});
+
+// Middleware to set req.isUnauthenticated for the first use of the '/forgotPassword' URL bar
+app.use('/forgotPassword', (req, res, next) => {
+    // Check if user is Already authenticated
+    if (!req.session.isAuthenticated) {
+        req.isUnauthenticated = true;        
+    }
+    next();
+});
+
+// Middleware to set req.isUnauthenticated for the first use of the '/forgotUsername' URL bar
+app.use('/forgotUsername', (req, res, next) => {
+    // Check if user is Already authenticated
+    if (!req.session.isAuthenticated) {
+        req.isUnauthenticated = true;        
+    }
+    next();
+});
+
+// Middleware to set req.isUnauthenticated for the first use of the '/home' URL bar
+app.use('/home', (req, res, next) => {
+    // Check if user is Already authenticated
+    if (!req.session.isAuthenticated) {
+        req.isUnauthenticated = true;        
+    }
+    next();
+});
+
+// Middleware to set req.isUnauthenticated for the first use of the '/verifyEmail' URL bar
+app.use('/verifyEmail', (req, res, next) => {
+    // Check if user is Already authenticated
+    if (!req.session.isAuthenticated) {
+        req.isUnauthenticated = true;        
+    }
+    next();
+});
+
+
+// Middleware to set req.isUnauthenticated for the first use of the '/signup' URL bar
+
+app.use('/signup', (req, res, next) => {
+    // Check if user is Already authenticated
+    if (!req.session.isAuthenticated) {
+        req.isUnauthenticated = true;        
+    }
+    next();
+});
+
+// Middleware to set req.isUnauthenticated for the first use of the '/login' URL bar
+app.use('/login', (req, res, next) => {
+    // Check if user is Already authenticated
+    if (!req.session.isAuthenticated) {
+        req.isUnauthenticated = true;        
+    }
+    next();
+});
+
+// Middleware to set req.isUnauthenticated for the first use of the '/logout' URL bar
+app.use('/logout', (req, res, next) => {
+    // Check if user is Already authenticated
+    if (!req.session.isAuthenticated) {
+        req.isUnauthenticated = true;        
+    }
+    next();
+});
+
+// Middleware to set req.isUnauthenticated for the first use of the '/resetPassword' URL bar
+app.use('/resetPassword', (req, res, next) => {
+    // Check if user is Already authenticated
+    if (!req.session.isAuthenticated) {
+        req.isUnauthenticated = true;        
+    }
+    next();
+});
+
 /*
 The JavaScript codes language sets up a LocalStrategy for Passport, which is a popular
 authentication middleware for Node.js. It defines a function that will be called when an
@@ -352,7 +462,6 @@ to the callback function, enabling the developer to access other request paramet
 necessary. This code provides a simple but effective way to authenticate users and ensure
 the security of their data.
 */
-
 passport.use(new LocalStrategy({
     usernameField: 'email',
     passwordField: 'password',
@@ -482,93 +591,148 @@ method provided by Passport.js. If the user is authenticated, the home template 
 res.render() method. If the user is not authenticated, the error404 template is rendered.
 */
 app.get('/', (req, res) => { 
-    if (req.isAuthenticated()) {
+    if (req.isUnauthenticated()) {
         res.render('home');
     } else {
         res.render('error404');
     }    
 });
 
-/*
-The code app.get('/error403', ...) sets up a route for handling GET requests to the /error403 URL
-path in the Express.js application.
+// User route dashboard
+app.get('/dashboard', (req, res) => {
+    // Check if user already authenticated.
+    if (req.session.isAuthenticated) {
+        console.log(req.user);
+        res.render('dashboard', { firstName: req.user.firstName, lastName: req.user.lastName, email: req.user.email});
+    }
+    // Check if this is the first use of '/dashboard' route URL bar
+    if (req.isUnauthenticated) {
+        res.render('login');
+    } else {
+        // Render signup page for new users
+        res.render('login');
+    }  
+});
 
-If the user is authenticated, the res.render method will render the error403 view using the template
-engine specified in the application. If the user is not authenticated, the res.render method will
-render the error500 view instead. The req.isAuthenticated() method is used to check if the user has
-been authenticated in the current session.
-*/
-
+// User route error403
 app.get('/error403', (req, res) => {
-    if (req.isAuthenticated()) {
+    // Check if user already authenticated.
+    if (req.session.isAuthenticated) {
+        return alert('You are already logged in!');
+    }
+    // Check if this is the first use of '/error403' route URL bar
+    if (req.isUnauthenticated) {
         res.render('error403');
     } else {
-        res.render('error500');
-    }    
+        // Render signup page for new users
+        res.render('error500')
+    }  
 });
 
-// Define a route for the error 404 page
+// User route error403
 app.get('/error404', (req, res) => {
-    if (req.isAuthenticated()) {
+    // Check if user already authenticated.
+    if (req.session.isAuthenticated) {
+        return alert('You are already logged in!');
+    }
+    // Check if this is the first use of '/error404' route URL bar
+    if (req.isUnauthenticated) {
         res.render('error404');
     } else {
-        res.render('error500');
-    }    
+        // Render signup page for new users
+        res.render('error500')
+    }  
 });
 
-// Define a route for the error 500 page
+// User route error500
 app.get('/error500', (req, res) => {
-    if (req.isAuthenticated()) {
+    // Check if user already authenticated.
+    if (req.session.isAuthenticated) {
+        return alert('You are already logged in!');
+    }
+    // Check if this is the first use of '/error500' route URL bar
+    if (req.isUnauthenticated) {
         res.render('error500');
     } else {
-        res.render('error404');
-    }    
+        // Render signup page for new users
+        res.render('error404')
+    }  
 });
 
-// Define a route for the forgot password page
+// User route forgotPassword
 app.get('/forgotPassword', (req, res) => {
-    if (req.isAuthenticated()) {
+    // Check if user already authenticated.
+    if (req.session.isAuthenticated) {
+        return alert('You are already logged in!');
+    }
+    // Check if this is the first use of '/forgotPassword' route URL bar
+    if (req.isUnauthenticated) {
         res.render('forgotPassword');
     } else {
-        res.render('error404');
-    }    
+        // Render signup page for new users
+        res.render('error404')
+    }  
 });
 
-// Define a route for the forgot username page
+// User route forgotUsername
 app.get('/forgotUsername', (req, res) => {
-    if (req.isAuthenticated()) {
+    // Check if user already authenticated.
+    if (req.session.isAuthenticated) {
+        return alert('You are already logged in!');
+    }
+    // Check if this is the first use of '/forgotUsername' route URL bar
+    if (req.isUnauthenticated) {
         res.render('forgotUsername');
     } else {
-        res.render('error404');
-    }    
+        // Render signup page for new users
+        res.render('error404')
+    }  
 });
 
-// Define a route for the home page
+// User route forgotUsername
 app.get('/home', (req, res) => {
-    if (req.isAuthenticated()) {
-        res.render('home');    
-    } else {
-        res.render('error404');        
+    // Check if user already authenticated.
+    if (req.session.isAuthenticated) {
+        return alert('You are already logged in!');
     }
+    // Check if this is the first use of '/home' route URL bar
+    if (req.isUnauthenticated) {
+        res.render('home');
+    } else {
+        // Render signup page for new users
+        res.render('error404')
+    }  
 });
 
-// Define a route for the verify email page
+// User route verifyEmail
 app.get('/verifyEmail', (req, res) => {
-    if (req.isAuthenticated()) {
+    // Check if user already authenticated.
+    if (req.session.isAuthenticated) {
+        return alert('You are already logged in!');
+    }
+    // Check if this is the first use of '/verifyEmail' route URL bar
+    if (req.isUnauthenticated) {
         res.render('verifyEmail');
     } else {
-        res.render('error404'); 
-    }    
+        // Render signup page for new users
+        res.render('error404')
+    }  
 });
 
+// User route signup
 app.get('/signup', (req, res) => {
-    if (req.isAuthenticated()) {
-        res.render('signup', {text: 'This is a EJS tutorial example'});
-    } else {
-        res.render('error404');
+    // Check if user already authenticated.
+    if (req.session.isAuthenticated) {
+        return alert('You are already logged in!');
     }
-})
-
+    // Check if this is the first use of '/signup' route URL bar
+    if (req.isUnauthenticated) {
+        res.render('signup');
+    } else {
+        // Render signup page for new users
+        res.render('signup')
+    }  
+});
 
 // Delete a route for the logout page
 app.delete('/logout', (req, res) => {  
@@ -592,39 +756,58 @@ app.delete('/logout', (req, res) => {
                 req.session.regenerate(function (err) {
                     if (err) next(err)
                 res.render('dashboard');
-            });
-        
-        });    
+            });        
+        }
+    );    
 });
 
-// Define a route for the logout page
-app.get('/logout', (req, res) => {
-    if (req.isAuthenticated()) {
-        res.render('logout');
-    } else {
-        res.render('error404');
-    }    
-});
-
-// Define a route for the login page
+// User route login
 app.get('/login', (req, res) => {
-    if (req.isAuthenticated()) {
+    // Check if user already authenticated.
+    if (req.session.isAuthenticated) {
+        res.render('dashboard')
+    }
+    // Check if this is the first use of '/login' route URL bar
+    if (req.isUnauthenticated) {
         res.render('login');
     } else {
-        res.render('dashboard');
-    }    
+        // Render signup page for new users
+        res.render('error404');
+    }  
 });
 
-// Define a route for the Reset Password page
+// User route logout
+app.get('/logout', (req, res) => {
+    // Check if user already authenticated.
+    if (req.session.isAuthenticated) {
+        return alert('You are already logged out!');
+    }
+    // Check if this is the first use of '/logout' route URL bar
+    if (req.isUnauthenticated) {
+        res.render('logout');
+    } else {
+        // Render signup page for new users
+        res.render('error404');
+    }  
+});
+
+// User route resetPassword
 app.get('/resetPassword', (req, res) => {
-    if (req.isAuthenticated()) {
+    // Check if user already authenticated.
+    if (req.session.isAuthenticated) {
+        return alert('You are already logged in!');
+    }
+    // Check if this is the first use of '/resetPassword' route URL bar
+    if (req.isUnauthenticated) {
         res.render('resetPassword');
     } else {
+        // Render signup page for new users
         res.render('error403');
-    }    
+    }  
 });
 
 // Define a route for the login page
+/*
 app.get('/dashboard', (req, res) => {
     if (req.isAuthenticated()) {
         console.log(req.user);
@@ -633,6 +816,7 @@ app.get('/dashboard', (req, res) => {
         res.render('login')
     }
 });
+*/
 
 /*
 The code creates a new instance of the SQLite3 Database using the sqlite3 module in JavaScript. 
@@ -683,7 +867,6 @@ db1.serialize(() => {
         confirmPassword VARCHAR (150) NOT NULL
     )`);
 });
-
 
 /*
 The given JavaScript codes language defines a route for signing up a new users using
@@ -768,7 +951,6 @@ function generateNewPassword() {
     }
     return newPassword;
   }
-
 
 /*
 This code sets up a connection to a SQLite3 database called "users.db" and creates a table
