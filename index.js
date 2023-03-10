@@ -479,8 +479,7 @@ const email = req.body.email;
                     user: 'testdevelopmentenvcustomercare@ivoteballot.com',
                     pass: IONOS_SECRET_KEY,
                 }
-            });
-            
+            });            
             
             if (req.isAuthenticated()) {
                 /*
@@ -533,8 +532,7 @@ const email = req.body.email;
                     } else {
                       console.log('Email Sent: ' + info.response);
                     }
-                  });
-                
+                  });                
 
                   transporter.sendMail(mailOptions_02, (error, info) => {
                     if (error) {
@@ -544,8 +542,7 @@ const email = req.body.email;
                       console.log('Email Sent: ' + info.response);
                       res.send('success!');
                     }
-                  });
-                  
+                  });                  
                   
             } else {
                 res.render('error404');
