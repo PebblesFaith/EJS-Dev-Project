@@ -220,9 +220,40 @@ if (process.env.NODE_ !== 'production') {
     require('dotenv').config();
 }
 
+/*
+The code app.use(express.json()); is a middleware function that is used in an Express.js application.
+It enables the application to parse incoming requests with JSON payloads, which are commonly used for
+RESTful APIs. This middleware adds the parsed JSON data to the request object of the application, allowing
+it to be accessed and used by subsequent middleware functions or route handlers.
+*/
 app.use(express.json());
+
+/*
+The code app.use(express.urlencoded({ extended: false })); is a middleware function that is used in
+an Express.js application. It enables the application to parse incoming requests with URL-encoded payloads, 
+which are commonly used for HTML form submissions. This middleware adds the parsed data to the request object
+of the application, allowing it to be accessed and used by subsequent middleware functions or route handlers.
+The extended option is set to false to use the Node.js built-in querystring library to parse the data, which 
+is suitable for simple data structures.
+*/
 app.use(express.urlencoded({ extended: false }));
 
+/*
+The code app.use(session(...)); is a middleware function that is used in an Express.js application to enable
+and configure session management. It creates and maintains a server-side session store to store session data 
+between users' requests. In this particular example, the session store is implemented using the
+Sqlite3SessionStore module, which uses a SQLite database to store the session data.
+
+The middleware takes several options, including secret, which is used to sign the session ID cookie to
+prevent tampering, and resave, which determines whether to save the session data to the store on every
+request or only when it has been modified. Additionally, the cookie option is used to configure various
+properties of the session ID cookie, such as its maxAge, which determines how long the session will 
+remain active, and its secure and httpOnly flags, which provide additional security protections.
+
+Overall, this middleware function provides a way to manage session data for each user session and
+allows developers to store and retrieve data on a per-session basis to keep track of user data,
+authentication status, and other user-specific information.
+*/
 app.use(
     session({
         store: new Sqlite3SessionStore({
@@ -241,13 +272,87 @@ app.use(
     })
 )
 
+/*
+The code app.use([passport.initialize()]); is a middleware function that is used in an Express.js
+application to enable authentication and authorization using the Passport.js library. 
+The passport.initialize() method initializes Passport and adds it to the middleware chain of the
+application.
+
+Once initialized, Passport can be used to authenticate requests and protect routes by verifying user
+credentials and permissions. Passport supports a wide range of authentication strategies, such as
+local authentication with a username and password, third-party authentication with OAuth or OpenID,
+and token-based authentication.
+
+By using Passport in conjunction with middleware functions like app.use(), developers can easily
+integrate authentication and authorization into their Express.js applications and secure their
+routes and data.
+*/
 app.use([passport.initialize()]);
+
+/*
+The code app.use(passport.session()); is a middleware function that is used in an Express.js 
+application to provide persistent authentication across multiple requests using Passport.js. 
+This middleware function depends on the passport.initialize() middleware function and should
+be added after it.
+
+When a user logs in successfully, Passport creates a session that is stored on the server and
+serialized using passport.serializeUser(). On subsequent requests, the session is deserialized
+using passport.deserializeUser() and the user information is loaded from the session store.
+
+By using app.use(passport.session()), developers can provide persistent authentication to their
+users and enable a seamless experience across multiple requests without requiring the user to
+log in every time they navigate to a new page.
+*/
 app.use(passport.session());
+
+/*
+The code app.use(methodOverride('_method')); is a middleware function that is used in an Express.js
+application to enable HTTP method overriding. It allows developers to use HTTP verbs such as PUT
+and DELETE, which are not supported by HTML forms, by using a special query parameter or header to
+specify the desired method.
+
+The _method argument passed to the methodOverride() function specifies the name of the parameter or
+header to use for the method override. By default, the middleware looks for the _method parameter
+in the query string of the request, but this can be customized using the getter option.
+
+Overall, this middleware provides a way to work around the limitations of HTML forms and use all
+HTTP methods in an Express.js application, making it easier to build RESTful APIs and perform CRUD
+operations.
+*/
 app.use(flash());
+
+/*
+The code app.use(methodOverride('_method')); is a middleware function that is used in an Express.js
+application to enable HTTP method overriding. It allows developers to use HTTP verbs such as PUT and
+DELETE, which are not supported by HTML forms, by using a special query parameter or header to
+specify the desired method.
+
+The _method argument passed to the methodOverride() function specifies the name of the parameter or
+header to use for the method override. By default, the middleware looks for the _method parameter in
+the query string of the request, but this can be customized using the getter option.
+
+Overall, this middleware provides a way to work around the limitations of HTML forms and use all HTTP
+methods in an Express.js application, making it easier to build RESTful APIs and perform CRUD operations.
+*/
 app.use(methodOverride('_method'));
 
+/*
+The JavaScript codes language sets up a LocalStrategy for Passport, which is a popular
+authentication middleware for Node.js. It defines a function that will be called when an
+user attempts to log in. The function takes the user's email and password, as an input
+and uses them to search for an user in a SQLite3 database.
 
-//Setup Passport to use the LocalStrategy for authentication
+If the user is not found, the function returns an error message to the client. If the user
+is found, the function uses the bcrypt library to compare the provided password with the
+stored hashed password. If the passwords match, the function returns the user's data information
+to the client (back-end server).
+
+The passReqToCallback option is set to true, which allows the request object to be passed
+to the callback function, enabling the developer to access other request parameters if 
+necessary. This code provides a simple but effective way to authenticate users and ensure
+the security of their data.
+*/
+
 passport.use(new LocalStrategy({
     usernameField: 'email',
     passwordField: 'password',
@@ -279,35 +384,44 @@ passport.use(new LocalStrategy({
                     //return done(null, row);
                     return done(null, { id: row.id, email: row.email, firstName: row.firstName, lastName: row.lastName });
 
-                });
+                }
+            );
                 
-            });
-
-       
+        });       
     }
 ));
 
+/*
+The code passport.serializeUser(function (user, done) { done(null, user.id); }) is a function
+that is used by Passport to serialize the user object for storage in a session.
 
-//Set up Passport to serialize and deserialize users
+The serializeUser function takes in a callback function that receives the user object and a
+done callback function as its parameters. The done function is called with null and the
+user's id property as arguments, which is then used to serialize the user object to a string
+representation.
+
+This serialized user data is then stored in the session, allowing the server to persist the
+user's authentication state across requests.
+
+Overall, serializeUser is an essential function for Passport-based authentication, as it enables
+the back-end server to efficiently manage user sessions and keep track of user authentication.
+*/
 passport.serializeUser(function (user, done) {
     done(null, user.id);
 });
+
 /*
-passport.deserializeUser(function(id, done) {
-    db1.get(`SELECT * FROM users WHERE id = ?`, [id], (err, row) => {
-        if (err) {
-            return done(err);
-        }
-        if (!row) {
+The code passport.deserializeUser is used by Passport to deserialize the user object from a 
+session. This function takes in the user's id and a callback function done as parameters.
 
-            return done(null, {
-                id:row.id,
-                email: row.email, firstName: row.firstName, lastName: row.lastName
+The deserializeUser function first queries the database using the user's id to retrieve
+the user's information. If the user is not found, the function returns a false value to 
+the done callback function. If the user is found, the function returns an object containing 
+the user's id, email, firstName, and lastName to the done callback function.
 
-            });   
-});
+Overall, deserializeUser is an important function in Passport-based authentication, as it 
+allows the server to retrieve user data from sessions and use it to authenticate requests.
 */
-
 passport.deserializeUser(function(id, done) {
     db1.get('SELECT * FROM users WHERE id = ?', id, (err, row) => {
       if (err) { 
@@ -320,13 +434,36 @@ passport.deserializeUser(function(id, done) {
     });
   });
 
-// Set the views directory
+/*
+The code app.set('views', './public/views') is used to set the directory where the server
+will look for views/templates to render. The views method is a built-in method of the Express.js
+framework, and the first argument specifies the name of the option to set, while the second
+argument specifies its value.
+
+In this case, the views directory is set to ./public/views, which means that the back-end server
+will look for view files in the public/views folder when rendering views/templates.
+*/
 app.set('views', './public/views');
 
-// Set the view engine to EJS
+/*
+The code app.set('view engine', 'ejs') is used to set the default view engine for the Express.js
+application. The view engine method is a built-in method of the Express.js framework, and the first
+argument specifies the name of the option to set, while the second argument specifies its value.
+
+In this case, the view engine is set to ejs, which means that the back-end server will use the EJS 
+(Embedded JavaScript) templating engine to render views/templates.
+*/
 app.set('view engine', 'ejs');
 
-// Serve static files from the "public" directory
+/*
+The code app.use(express.static(path.join(__dirname, 'public'))) is used to serve static files in 
+the Express.js application. The express.static method is a built-in middleware function of the
+Express.js framework, which serves static files such as images, CSS, JavaScript, and other files
+in a directory specified in the method.
+
+In this case, the path.join(__dirname, 'public') specifies the directory where the static files
+are located, which is the public directory located in the same directory as the current file.
+*/
 app.use(express.static(path.join(__dirname, 'public')));
 
 /*
@@ -337,7 +474,13 @@ request property (data information is sent to the SQLites3 database) such as, th
 address and password is set through the login session is established. 
 */
 
-// Define a route for the login page
+/*
+The code app.get('/', (req, res) => {...} sets up a route for the root URL of the Express.js application.
+
+The route handler function checks if the user is authenticated using the req.isAuthenticated()
+method provided by Passport.js. If the user is authenticated, the home template is rendered using the
+res.render() method. If the user is not authenticated, the error404 template is rendered.
+*/
 app.get('/', (req, res) => { 
     if (req.isAuthenticated()) {
         res.render('home');
@@ -346,7 +489,16 @@ app.get('/', (req, res) => {
     }    
 });
 
-// Define a route for the error 404 page
+/*
+The code app.get('/error403', ...) sets up a route for handling GET requests to the /error403 URL
+path in the Express.js application.
+
+If the user is authenticated, the res.render method will render the error403 view using the template
+engine specified in the application. If the user is not authenticated, the res.render method will
+render the error500 view instead. The req.isAuthenticated() method is used to check if the user has
+been authenticated in the current session.
+*/
+
 app.get('/error403', (req, res) => {
     if (req.isAuthenticated()) {
         res.render('error403');
@@ -567,6 +719,27 @@ function generateNewPassword() {
     return newPassword;
   }
 
+
+/*
+This code sets up a connection to a SQLite3 database called "users.db" and creates a table
+called "users" if it doesn't already exist. It then sets up two routes: one to handle user
+signups and another to handle user login.
+
+The signup route takes in user data from a form and logs it to the console. It then uses
+the bcrypt library to hash the user's password and confirm password before checking if
+they match. If they match, it inserts the user data into the "users" table in the database.
+If they don't match, it renders the signup page again with an error message.
+
+The login route uses Passport.js to authenticate the user's credentials. If the authentication
+succeeds, it redirects the user to a dashboard. If it fails, it redirects the user to the login
+page with a flash message.
+
+There is also a function called "generateNewPassword" that generates a random password of
+length 20 containing letters, numbers, and symbols. Finally, there is a route called
+"/forgotPassword" that allows users to reset their password by generating a new one,
+hashing it, updating their record in the database, and sending them an email with the
+new password (using nodemailer and a test SMTP service account).
+*/
 app.post('/forgotPassword', (req, res) => {
 const email = req.body.email;
 
