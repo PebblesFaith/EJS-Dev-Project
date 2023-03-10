@@ -30,48 +30,164 @@ logic; in order to get the routes, URL to work properly because someone is tampe
 ‘req.isAuthenticated()’ for which Ms. Ajai had no control over.
 */
 
+/* -------------------------------------------------------------------------------------------------------------*/
 
-
-/*
-Sarai Hannah Ajai has imported the 'express' API library and she has assigned a constant; in order to import an Express module
-library application that connect with HTTP and middleware in Node.js back-end server (index.js) for accepting HTTP requests and responses.
- */
+/* 
+1. The code const express = require('express') imports the Express.js framework into your Node.js application and assigns
+   it to the constant express.
+2. The require function is a built-in Node.js method that allows you to import modules, and in this case, it is 
+   importing the express module so that you can use the framework in your application.
+*/
 const express = require('express');
 
+/*
+The code const app = express(); creates a new instance of the Express.js framework and assigns it to the
+constant app, allowing you to define routes and middleware for your application.
+*/
 const app = express();
 
+/*
+1. The code const path = require('path') imports the built-in Node.js path module, which provides utilities
+   for working with file and directory paths.
+2. You can use the path module to manipulate file paths in a platform-independent way and perform
+   tasks such as resolving relative paths, joining multiple paths, and extracting file extensions.
+*/
 const path = require('path');
 
+/*
+1. The code const ejs = require('ejs') imports the EJS (Embedded JavaScript) templating engine into
+   your Node.js application.
+2. You can use the ejs module to render dynamic HTML pages by embedding JavaScript code into
+   your HTML templates, allowing you to easily generate dynamic content based on data from your
+   application.
+*/
 const ejs = require('ejs');
 
+/*
+1. The code const sqlite3 = require('sqlite3').verbose() imports the SQLite3 module into your Node.js application.
+2. The .verbose() method provides additional debugging information when working with the SQLite3 database.
+3. You can use the sqlite3 module to create, read, update, and delete data in an SQLite3 database,
+   which is a popular embedded database engine.
+*/
 const sqlite3 = require('sqlite3').verbose();
 
+/*
+1. The code const bodyParser = require('body-parser') is a middleware module that parses incoming request bodies
+   in a Node.js application.
+2. The body-parser module can parse different types of request bodies, including JSON, URL-encoded, and
+   multipart forms.
+3. Once the request body is parsed, the middleware adds the parsed data to the request object, which you
+   can then access in your route handlers.
+*/
 const bodyParser = require('body-parser');
 
+/*
+1. The code const bcrypt = require('bcrypt') is a module that allows you to hash and compare passwords in
+   a Node.js application.
+2. The bcrypt module uses a one-way hashing algorithm to securely store user passwords in a database,
+   making it difficult for attackers to retrieve the original password.
+3. You can use the bcrypt module to generate a salted hash of a password, and later compare the hash with
+   the user's input to verify their identity.
+*/
 const bcrypt = require('bcrypt');
 
+/*
+1. The code const passport = require('passport') is a middleware module that provides authentication support
+   in a Node.js application.
+2. The passport module provides a flexible and modular authentication framework that can be easily
+   integrated into an existing application.
+3. You can use the passport module to implement various authentication strategies, such as local
+   authentication, social authentication, and token-based authentication, to secure your application's resources.
+*/
 const passport = require('passport');
 
+/*
+1. The code const LocalStrategy = require('passport-local').Strategy is a module that provides a local authentication
+   strategy for the passport middleware.
+2. The passport-local module allows you to authenticate users using a username and password combination that is
+   stored locally in your application.
+3. You can use the LocalStrategy object to define how the authentication process works and provide custom
+ validation and error handling logic for the authentication flow.
+*/
 const LocalStrategy = require('passport-local').Strategy;
 
 const LocalStrategy2 = require('passport-local').Strategy;
 
+/*
+1. The code const sqliteDB = require('better-sqlite3') is a module that provides a more efficient and convenient
+   way to work with SQLite databases in a Node.js application.
+2. The better-sqlite3 module is built on top of the standard sqlite3 module but provides a simpler and more
+   intuitive API for performing common database operations.
+3. You can use the better-sqlite3 module to create, read, update, and delete data in an SQLite database,
+   and leverage features such as prepared statements and transactions for better performance and security.
+*/
 const sqliteDB = require('better-sqlite3');
 
+/*
+The code const session = require('express-session'); imports the express-session module and assigns it
+to a constant variable named session. This module provides a middleware that allows you to create and
+manage user sessions in your index.js (server) web application. With express-session, you can store
+the user data in a session and persist it across requests.
+*/
 const session = require('express-session');
 
+/*
+The code const Sqlite3SessionStore = require("better-sqlite3-session-store")(session); imports the
+better-sqlite3-session-store module and creates a new instance of the session store that can be used
+with the express-session middleware. This session store uses the better-sqlite3 module to store
+session data in a SQLite database. By using this module, you can store and manage user sessions in a
+reliable and efficient way.
+*/
 const Sqlite3SessionStore = require("better-sqlite3-session-store")(session);
 
+/*
+The code const flash = require('connect-flash'); imports the connect-flash module, which provides a 
+middleware for storing and displaying flash messages in an Express.js application. Flash messages are 
+short-lived messages that are stored in the session and displayed to the user on the next request. With
+connect-flash, you can easily create and manage flash messages in your application, which can be used to
+display success messages, error messages, or any other kind of notification to the user.
+*/
 const flash = require('connect-flash');
 
+/*
+The code const methodOverride = require('method-override'); imports the method-override module, which
+provides a middleware for overriding the HTTP method of a request in an Express.js application. This is
+useful when working with HTML forms, which can only submit GET and POST requests, but you want to use
+other HTTP methods like PUT or DELETE. With method-override, you can specify a method override using a
+query parameter or a special header, and the middleware will modify the request accordingly before it is
+handled by your application's routes.
+*/
 const methodOverride = require('method-override');
 
+/*
+The code const nodemailer = require('nodemailer'); imports the nodemailer module, which is a popular
+email sending library for Node.js applications. With nodemailer, you can easily create and send emails 
+from your application using a wide range of transport methods, including SMTP, Sendmail, and more. The
+module also provides support for HTML emails, attachments, and other advanced email features.
+*/
 const nodemailer = require('nodemailer');
 
+/*
+The code const db = new sqliteDB('signUpDatabase_Session.db', { verbose: console.log('Session login has
+been successfully created')}); creates a new instance of the sqliteDB object and initializes a new SQLite
+database file named signUpDatabase_Session.db. The second argument to the constructor is an options object
+that enables logging to the console when the database is successfully created. Once the database is created,
+you can use the db object to query and manipulate the database using the better-sqlite3 module.
+*/
 const db = new sqliteDB('signUpDatabase_Session.db', { verbose: console.log('Session login has been successfully created')});
 
+/*
+The code const port = 3000; initializes a constant variable named port with the value 3000. This value is
+the port number that the Express.js application will listen on.
+*/
 const port = 3000; 
 
+/*
+The app.listen() method starts the Express.js application and listens for incoming requests on the port specified 
+by the port variable. If an error occurs during startup, the method logs an error message to the console. If the 
+application starts successfully, the method logs a message to the console indicating that the application is 
+listening on the specified port for test prototype requests.
+*/
 app.listen(port, function(err) {
     if (err) {
         console.log('There is a problem loading iVoteBallot prototype port 3000' + err);
@@ -80,11 +196,26 @@ app.listen(port, function(err) {
     }
 });
 
+/*
+The code require('dotenv').config(); loads environment variables from a .env file into the Node.js process environment.
+This allows you to store sensitive information like API keys or database credentials outside of your codebase and keep
+them separate from your application logic
+*/
 require('dotenv').config();
+
+/*
+The variables IONOS_SECRET_KEY, EXPRESS_SESSION_KEY, and SESSION_MAX_AGE retrieve the values of environment variables
+with the same names. These values are typically used to configure and customize the behavior of the application.
+*/
 const IONOS_SECRET_KEY = process.env.IONOS_SECRET_KEY;
 const EXPRESS_SESSION_KEY = process.env.EXPRESS_SESSION_KEY;
 const SESSION_MAX_AGE = process.env.SESSION_MAX_AGE;
 
+/*
+The if (process.env.NODE_ !== 'production') block checks whether the application is running in production mode,
+and if not, loads additional environment variables from another .env file. This is a common practice to ensure
+that sensitive information is not accidentally leaked in development or testing environments.
+*/
 if (process.env.NODE_ !== 'production') {
     require('dotenv').config();
 }
