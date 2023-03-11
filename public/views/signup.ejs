@@ -148,7 +148,19 @@
 			
 			return false;
 			
-			}      		
+			} 
+			
+			if (password != confirmPassword) {
+                        document.getElementById('confirmPasswordErrorMessage').textContent = 'Your password does not match to your confirm password which are required input fields.';
+
+                        setTimeout(function() {
+                            document.getElementById('confirmPasswordErrorMessage').textContent = '';
+                        },
+                        9000)
+
+                        return false;
+
+                    }
 				
 			e.preventDefault();  
 				
