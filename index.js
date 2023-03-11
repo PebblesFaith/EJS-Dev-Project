@@ -419,6 +419,7 @@ app.use('/signup', (req, res, next) => {
     next();
 });
 
+
 // Middleware to set req.isUnauthenticated for the first use of the '/login' URL bar
 app.use('/login', (req, res, next) => {
     // Check if user is Already authenticated
@@ -427,6 +428,7 @@ app.use('/login', (req, res, next) => {
     }
     next();
 });
+
 
 // Middleware to set req.isUnauthenticated for the first use of the '/logout' URL bar
 app.use('/logout', (req, res, next) => {
@@ -936,11 +938,26 @@ app.post('/signup', async(req, res) => {
         });
     });     
 
-app.post('/login', passport.authenticate('local', {
-    successRedirect: 'dashboard',
-    failureRedirect: 'login',
-    failureFlash: true
-}));
+
+
+
+// When the user login from using the middleware function that checks, if the user
+// is already authenticated or not authenticated is causing the middleware
+// to set to false from the above middleware.
+
+app.post(
+    '/login',
+    passport.authenticate('local', {
+        successRedirect: 'dashboard',
+        failureRedirect: '/login'
+    }), (req, res) => {
+      if (req.user.isAuthenticated === true) {
+        res.redirect('/dashboard');
+      }
+      if (req.user.isAuthenticated === false) {
+        res.redirect('/login');
+      }
+    });
 
 function generateNewPassword() {
     const length = 20;
