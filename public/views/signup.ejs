@@ -124,7 +124,7 @@
 			
 			const regExPassword = /^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[^a-zA-Z0-9])(?!.*\s).{8,32}$/;
 			
-				if (password === '' || password == null || password.length <= 7 || !password.match(regExPassword)) {
+			if (password === '' || password == null || password.length <= 7 || !password.match(regExPassword)) {
 				document.getElementById('passwordErrorMessage').textContent = 'Your password is a required input field.';
 			
 				setTimeout(function() {
@@ -138,7 +138,7 @@
 			
 			const confirmPassword = document.getElementById('confirmPassword').value.trim();		
 			
-				if (confirmPassword === '' || confirmPassword == null || confirmPassword.length <= 7 || !confirmPassword.match(regExPassword)) {
+			if (confirmPassword === '' || confirmPassword == null || confirmPassword.length <= 7 || !confirmPassword.match(regExPassword)) {
 				document.getElementById('confirmPasswordErrorMessage').textContent = 'Your confirm password is a required input field.';
 			
 				setTimeout(function() {
@@ -151,16 +151,16 @@
 			} 
 			
 			if (password != confirmPassword) {
-                        document.getElementById('confirmPasswordErrorMessage').textContent = 'Your password does not match to your confirm password which are required input fields.';
+				document.getElementById('confirmPasswordErrorMessage').textContent = 'Your password does not match to your confirm password which are required input fields.';
 
-                        setTimeout(function() {
-                            document.getElementById('confirmPasswordErrorMessage').textContent = '';
-                        },
-                        9000)
+				setTimeout(function() {
+					document.getElementById('confirmPasswordErrorMessage').textContent = '';
+				},
+				9000)
 
-                        return false;
+				return false;
 
-                    }
+            }
 				
 			e.preventDefault();  
 				
