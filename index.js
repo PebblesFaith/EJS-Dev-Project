@@ -336,6 +336,7 @@ methods in an Express.js application, making it easier to build RESTful APIs and
 */
 app.use(methodOverride('_method'));
 
+
 // Middleware to set req.isUnauthenticated for the first use of the '/dashboard' URL bar
 app.use('/dashboard', (req, res, next) => {
     // Check if user is Already authenticated
@@ -408,7 +409,6 @@ app.use('/verifyEmail', (req, res, next) => {
     next();
 });
 
-
 // Middleware to set req.isUnauthenticated for the first use of the '/signup' URL bar
 
 app.use('/signup', (req, res, next) => {
@@ -419,16 +419,17 @@ app.use('/signup', (req, res, next) => {
     next();
 });
 
-
 // Middleware to set req.isUnauthenticated for the first use of the '/login' URL bar
 app.use('/login', (req, res, next) => {
+    console.log('middleware called!');
     // Check if user is Already authenticated
-    if (!req.session.isAuthenticated) {
-        req.isUnauthenticated = true;        
+    if (!req.session.isAuthenticated) {  
+      
+        // User of '/login' URL
+        req.isUnauthenticated = true;
     }
     next();
 });
-
 
 // Middleware to set req.isUnauthenticated for the first use of the '/logout' URL bar
 app.use('/logout', (req, res, next) => {
@@ -493,10 +494,9 @@ passport.use(new LocalStrategy({
                         return done(null, false, { message: 'You have entered the incorrect password.'});
                     }
                     //return done(null, row);
-                    return done(null, { id: row.id, email: row.email, firstName: row.firstName, lastName: row.lastName });
+                    return done(null, { id: row.id, email: row.email, firstName: row.firstName, lastName: row.lastName, isAuthenticated: true });
 
-                }
-            );
+            });
                 
         });       
     }
@@ -600,22 +600,6 @@ app.get('/', (req, res) => {
     }    
 });
 
-// User route dashboard
-app.get('/dashboard', (req, res) => {
-    // Check if user already authenticated.
-    if (req.session.isAuthenticated) {
-        console.log(req.user);
-        res.render('dashboard', { firstName: req.user.firstName, lastName: req.user.lastName, email: req.user.email});
-    }
-    // Check if this is the first use of '/dashboard' route URL bar
-    if (req.isUnauthenticated) {
-        res.render('login');
-    } else {
-        // Render signup page for new users
-        res.render('login');
-    }  
-});
-
 // User route error403
 app.get('/error403', (req, res) => {
     // Check if user already authenticated.
@@ -664,14 +648,12 @@ app.get('/error500', (req, res) => {
 // User route forgotPassword
 app.get('/forgotPassword', (req, res) => {
     // Check if user already authenticated.
-    if (req.session.isAuthenticated) {
-        return alert('You are already logged in!');
-    }
-    // Check if this is the first use of '/forgotPassword' route URL bar
     if (req.isUnauthenticated) {
+        console.log('User had been successfully authenticated within the Session through the passport from forgotPassword webpage!');
         res.render('forgotPassword');
     } else {
         // Render signup page for new users
+        console.log('User had not been successfully authenticated within the Session through the passport from forgotPassword webpage!');
         res.render('error404')
     }  
 });
@@ -765,30 +747,27 @@ app.delete('/logout', (req, res) => {
 
 // User route login
 app.get('/login', (req, res) => {
+    console.log('isUnauthenticated: ', req.isUnauthenticated);
     // Check if user already authenticated.
-    if (req.session.isAuthenticated) {
-        res.render('dashboard')
-    }
-    // Check if this is the first use of '/login' route URL bar
     if (req.isUnauthenticated) {
         res.render('login');
+        console.log('User is not logged into the dashboard!');
+    } else if     
+        (req.session.isAuthenticated) {
+        res.redirect('/dashboard');
+        console.log('User is logged into the dashboard!');
     } else {
         // Render signup page for new users
-        res.render('error404');
+        res.render('signup');
     }  
 });
 
 // User route logout
-app.get('/logout', (req, res) => {
-    // Check if user already authenticated.
-    if (req.session.isAuthenticated) {
-        return alert('You are already logged out!');
-    }
-    // Check if this is the first use of '/logout' route URL bar
-    if (req.isUnauthenticated) {
+app.get('/logout', (req, res) => { 
+    if (req.isAuthenticated()) {
+        console.log('User have logged logged out of the dashboard!');
         res.render('logout');
-    } else {
-        // Render signup page for new users
+    } else {      
         res.render('error404');
     }  
 });
@@ -809,16 +788,17 @@ app.get('/resetPassword', (req, res) => {
 });
 
 // Define a route for the login page
-/*
+
 app.get('/dashboard', (req, res) => {
     if (req.isAuthenticated()) {
         console.log(req.user);
+        console.log('User had been successfully authenticated within the Session through the passport from dashboard!');
         res.render('dashboard', { firstName: req.user.firstName, lastName: req.user.lastName, email: req.user.email});
     } else {
         res.render('login')
+        console.log('User is not successfully authenticated within the session through the passport from dashboard!');
     }
 });
-*/
 
 /*
 The code creates a new instance of the SQLite3 Database using the sqlite3 module in JavaScript. 
@@ -936,28 +916,15 @@ app.post('/signup', async(req, res) => {
                 res.render('login');
             }
         });
-    });     
-
-
-
-
-// When the user login from using the middleware function that checks, if the user
-// is already authenticated or not authenticated is causing the middleware
-// to set to false from the above middleware.
+    });   
 
 app.post(
     '/login',
     passport.authenticate('local', {
-        successRedirect: 'dashboard',
-        failureRedirect: '/login'
-    }), (req, res) => {
-      if (req.user.isAuthenticated === true) {
-        res.redirect('/dashboard');
-      }
-      if (req.user.isAuthenticated === false) {
-        res.redirect('/login');
-      }
-    });
+        successRedirect: '/dashboard',
+        failureRedirect: '/login',
+        failureFlash: true  
+}));
 
 function generateNewPassword() {
     const length = 20;
