@@ -431,6 +431,18 @@ app.use('/login', (req, res, next) => {
     next();
 });
 
+// Middleware to set req.isUnauthenticated for the first use of the '/login' URL bar
+app.use('/login2', (req, res, next) => {
+    console.log('middleware called!');
+    // Check if user is Already authenticated
+    if (!req.session.isAuthenticated) {  
+      
+        // User of '/login' URL
+        req.isUnauthenticated = true;
+    }
+    next();
+});
+
 // Middleware to set req.isUnauthenticated for the first use of the '/logout' URL bar
 app.use('/logout', (req, res, next) => {
     // Check if user is Already authenticated
@@ -762,10 +774,28 @@ app.get('/login', (req, res) => {
     }  
 });
 
+// User route login
+app.get('/login2', (req, res) => {
+    console.log('isUnauthenticated: ', req.isUnauthenticated);
+    // Check if user already authenticated.
+    if (req.isUnauthenticated) {
+        res.render('login2');
+        console.log('User is not logged into the reset Temporary Password!');
+    } else if     
+        (req.session.isAuthenticated) {
+        res.redirect('/resetPassword');
+        console.log('User is logged into the reset Temporary Password!');
+    } else {
+        // Render signup page for new users
+        res.render('signup');
+    }  
+});
+
+
 // User route logout
 app.get('/logout', (req, res) => { 
     if (req.isAuthenticated()) {
-        console.log('User have logged logged out of the dashboard!');
+        console.log('User have logged out of the dashboard!');
         res.render('logout');
     } else {      
         res.render('error404');
@@ -792,11 +822,11 @@ app.get('/resetPassword', (req, res) => {
 app.get('/dashboard', (req, res) => {
     if (req.isAuthenticated()) {
         console.log(req.user);
-        console.log('User had been successfully authenticated within the Session through the passport from dashboard!');
+        console.log('User had been successfully authenticated within the Session through the passport from the dashboard!');
         res.render('dashboard', { firstName: req.user.firstName, lastName: req.user.lastName, email: req.user.email});
     } else {
         res.render('login')
-        console.log('User is not successfully authenticated within the session through the passport from dashboard!');
+        console.log('User is not successfully authenticated within the session through the passport from the dashboard!');
     }
 });
 
@@ -926,6 +956,14 @@ app.post(
         failureFlash: true  
 }));
 
+app.post(
+    '/login2',
+    passport.authenticate('local', {
+        successRedirect: '/resetPassword',
+        failureRedirect: '/login2',
+        failureFlash: true  
+}));
+
 function generateNewPassword() {
     const length = 20;
     const charset = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()_+-={}[]:";?,./~';
@@ -984,7 +1022,7 @@ const email = req.body.email;
             // Send the new password to the user's email to nodemailer 
             //sendEmail(email, 'New password', `Your new password is: ${newPassword}`);
 
-            res.redirect('/verifyEmail');
+            res.redirect('/resetPassword');
             console.log('SQlite3 language had properly execute the UPDATE successfully for the user.')
 
             /*
