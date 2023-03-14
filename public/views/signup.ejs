@@ -17,36 +17,41 @@
 		
 		<form action="/signup" onsubmit="return validated()" method="POST" >
 			<label for="first-name">First Name:</label>
-			<input type="text" id="firstname" name="firstName">
+			<input type="text" id="firstname" size="25" name="firstName">
 			<br>
 			<span id="firstNameErrorMessage"></span>
 			<br>		
 			<label for="last-name">Last Name:</label>
-			<input type="text" id="lastname" name="lastName">
+			<input type="text" id="lastname" size="25" name="lastName">
 			<br>
 			<span id="lastNameErrorMessage"></span>
 			<br>
 			<label for="username">Username:</label>
-			<input type="text" id="username" name="userName">
+			<input type="text" id="username" size="25" name="userName">
 			<br>
 			<span id="usernameErrorMessage"></span>
 			<br>
 			<label for="email">Email:</label>
-			<input type="email" id="email" name="email">
+			<input type="email" id="email" size="75" name="email">
 			<br>
 			<span id="emailErrorMessage"></span>
 			<br>
 			<label for="password">Password:</label>
-			<input type="password" id="password" name="password">
+			<input type="password" id="password"  size="75" name="password">
 			<br>
 			<span id="passwordErrorMessage"></span>
 			<br>			
 			<label for="confirmPassword">Confirm Password:</label>
-			<input type="password" id="confirmPassword" name="confirmPassword">
+			<input type="password" id="confirmPassword" size="75" name="confirmPassword">
 			<br>
 			<span id="confirmPasswordErrorMessage"></span>
+			<br>			
+			<input type="hidden" id="temporary_Password" size="75" name="temporary_Password" value="test">
 			<br>
-			<button type="submit" >Sign Up</button>
+			<span id="temporaryPasswordErrorMessage"></span>
+			<br>
+
+			<button type="submit" >Submit</button>
 		</form>
 		<br>
 		<br>
@@ -161,6 +166,14 @@
 				return false;
 
             }
+
+			const temporary_Password = document.getElementById('temporary_Password').value.trim();
+			
+			if (temporary_Password === '' || temporary_Password == null)  {                                                               
+						
+			return false;				
+			
+			}		
 				
 			e.preventDefault();  
 				
