@@ -876,7 +876,8 @@ db1.serialize(() => {
         userName VARCHAR (25) NOT NULL,
         email VARCHAR (50) NOT NULL,
         password VARCHAR (150) NOT NULL,
-        confirmPassword VARCHAR (150) NOT NULL
+        confirmPassword VARCHAR (150) NOT NULL,
+        temporary_Password VARCHAR (150) NOT NULL
     )`);
 });
 
@@ -908,6 +909,7 @@ app.post('/signup', async(req, res) => {
     const email = req.body.email;
     const password = req.body.password;
     const confirmPassword = req.body.confirmPassword;
+    const temporary_Password = req.body.temporary_Password;
 
     console.log(req.body);
     console.log('User first name: ' + firstName + '.');
@@ -916,6 +918,7 @@ app.post('/signup', async(req, res) => {
     console.log('User email is: ' + email + '.');
     console.log('User password is: ' + password + '.');
     console.log('User confirm password is: ' + confirmPassword + '.');
+    console.log('User temporary password is: ' + temporary_Password + '.');
     console.log(req.session);
     
    // Hash the password field using bcrypt.
@@ -936,8 +939,8 @@ app.post('/signup', async(req, res) => {
     }   
 
     // Insert the user data information in the SQLite3 database.
-    db1.run(`INSERT INTO users (firstName, lastName, userName, email, password, confirmPassword) VALUES (?,?,?,?,?,?)`,         
-    [firstName, lastName, userName, email, passwordHashed, confirmPasswordHashed],
+    db1.run(`INSERT INTO users (firstName, lastName, userName, email, password, confirmPassword, temporary_Password) VALUES (?,?,?,?,?,?,?)`,         
+    [firstName, lastName, userName, email, passwordHashed, confirmPasswordHashed, temporary_Password],
         function(err) {
             if(err) {
                 console.log(err.message);
@@ -956,13 +959,6 @@ app.post(
         failureFlash: true  
 }));
 
-app.post(
-    '/login2',
-    passport.authenticate('local', {
-        successRedirect: '/resetPassword',
-        failureRedirect: '/login2',
-        failureFlash: true  
-}));
 
 function generateNewPassword() {
     const length = 20;
@@ -1001,29 +997,29 @@ const email = req.body.email;
     db1.get('SELECT * FROM users WHERE email = ?', email, (err, row) => {
         if (err) {
         console.error(err);
-        console.log('SQLite3 language did not successfully execute user/s email address search properly; therefore this error means a JavaScript codes language error.');
-        res.render('error500');
+        console.log('SQLite3 query did not successfully executed the user/s email address search properly; therefore this error means a JavaScript codes language error.');
+        res.render('error403');
 
         } else if (!row) {
         res.render('/forgotPassword', { error: 'Email not found' });
         console.log('User/s email was not successfully found onto the SQlite3 database.')
         } else {
-        // Generate a new password and update the user's record in the database
+        // Generate a new user's password then update the user's record into the SQLite3 database.
       
         const newPassword = generateNewPassword();
         const hash = bcrypt.hashSync(newPassword, 13);
        
-        db1.run('UPDATE users SET password = ? WHERE email = ?', hash, email, (err) => {
+        db1.run('UPDATE users SET temporary_Password = ? WHERE email = ?', hash, email, (err) => {
             if (err) {
             console.error(err);
-            console.log('SQlite3 language had not properly execute the UPDATE correctly.')
+            console.log('The SQlite3 query have not been properly executed, the user/s UPDATE correctly.');
             res.render('error500');
             } else {
             // Send the new password to the user's email to nodemailer 
             //sendEmail(email, 'New password', `Your new password is: ${newPassword}`);
 
             res.redirect('/resetPassword');
-            console.log('SQlite3 language had properly execute the UPDATE successfully for the user.')
+            console.log('The SQlite3 query have been properly executed, the user/s UPDATE successfully.');
 
             /*
             Sarai Hannah Ajai has generated a test SMTP service account; in order to receive AccouNetrics' customercare@ionos.com emails from the 
@@ -1113,6 +1109,54 @@ const email = req.body.email;
         }
     });
 });
+
+app.post('/resetPassword', (req, res) => {
+    const temporary_Password = req.body.temporary_Password; // get the temporary password from the request body
+  
+    // hash the new password and confirm password
+    bcrypt.hash(req.body.newPassword, 13, (err, hash) => {
+      if (err) {
+        console.error(err);
+      }
+      const newPasswordHash = hash;
+      
+      bcrypt.hash(req.body.newConfirmPassword, 13, (err, hash) => {
+        if (err) {
+            console.error(err);
+        }
+        const newConfirmPasswordHash = hash;
+  
+        // retrieve the user record from the database based on the temporary password
+        const query = 'SELECT * FROM users WHERE temporary_Password = ?';
+        db1.get(query, [temporary_Password], (err, user) => {
+          if (err) {
+            console.error(err);
+            console.log('SQLite3 query did not successfully executed the user/s email address search properly; therefore this error means a JavaScript codes language error.');
+          } else {
+            console.error(err);
+            console.log('SQLite3 query did successfully executed the user/s email address search properly; therefore this error means a JavaScript codes language error.');
+
+          }
+  
+          // update the user's password and confirm password in the database
+          const updateQuery = 'UPDATE users SET password = ?, confirmPassword = ? WHERE temporary_Password = ?';
+          db1.run(updateQuery, [newPasswordHash, newConfirmPasswordHash], temporary_Password, (err) => {
+            if (err) {
+                console.error(err);
+                console.log('The user/s password and confirm password were not properly updated from SQLite3 query app.post(/resetPassword).)')
+            } else {
+            res.redirect('/login'); // redirect to dashboard after password and confirm password are updated
+            console.log('The user/s password and confirm password were properly updated from SQLite3 query app.post(/resetPassword).');
+            };
+          });
+        });
+      });
+    });
+  });
+  
+
+
+
 
 
 
