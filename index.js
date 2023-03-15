@@ -660,8 +660,13 @@ app.get('/error500', (req, res) => {
 // User route forgotPassword
 app.get('/forgotPassword', (req, res) => {
     // Check if user already authenticated.
+    if (req.session.isAuthenticated) {
+        res.render('login2'); 
+        console.log('User had not been successfully authenticated within the Session through the passport from forgotPassword webpage!');
+    }
+    // Check if this is the first use of '/error500' route URL bar
     if (req.isUnauthenticated) {
-        console.log('User had been successfully authenticated within the Session through the passport from forgotPassword webpage!');
+        console.log('User had not been successfully authenticated within the Session through the passport from forgotPassword webpage!');
         res.render('forgotPassword');
     } else {
         // Render signup page for new users
@@ -959,7 +964,6 @@ app.post(
         failureFlash: true  
 }));
 
-
 function generateNewPassword() {
     const length = 20;
     const charset = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()_+-={}[]:";?,./~';
@@ -1018,8 +1022,8 @@ const email = req.body.email;
             // Send the new password to the user's email to nodemailer 
             //sendEmail(email, 'New password', `Your new password is: ${newPassword}`);
 
-            res.redirect('/resetPassword');
-            console.log('The SQlite3 query have been properly executed, the user/s UPDATE successfully.');
+            res.redirect('/login2');
+            console.log('The SQlite3 query data have been properly executed from the passport and session and, the user/s UPDATED data information had been successfully posted to the SQLite3 database.');
 
             /*
             Sarai Hannah Ajai has generated a test SMTP service account; in order to receive AccouNetrics' customercare@ionos.com emails from the 
@@ -1053,23 +1057,22 @@ const email = req.body.email;
                 const mailOptions_02 = {
                     from: 'testdevelopmentenvcustomercare@ivoteballot.com',
                     to: req.body.email, 
-                    subject: `Authenticate your iVoteBallot's Email Address Link`,
+                    subject: `You have Successfully Authenticate Your iVoteBallot's Email Address`,
                     html: `
                     
-                    <p>Dear ${req.user.firstName} ${req.user.lastName},</p>
+                    <p>Dear ${req.user.firstName} ${req.user.lastName}:</p>                    
 
-                    <p>Please click onto the following link in order to authenticate your email address:<p>
-
-                    <p>Your new temporary password is: ${newPassword}</p;
-                
+                    <p>We are pleased to inform you that your temporary password is: ${newPassword}</p;               
                     <br>
+                    <p>And, please use this password to verify your temporary access. Once you have logged
+                       in, we encourage you to change your password; in order to keep your iVoteBallot's
+                       account secure.                       
+                    <p>                                       
+                       
+                    <p>Thank you for using our iVoteBallot's services</p>                    
                     
-                    <p>and, your email address verification code will expire in 10 minutes. </p>
-                    <br>        
-                    <p>Respectfully, </p>
+                    <p>Respectfully Yours,</p>
                     
-                    <br>
-
                     <p>iVoteBallot's Customer Care Team </p>
                     
                     `,          
@@ -1110,53 +1113,42 @@ const email = req.body.email;
     });
 });
 
+
+
 app.post('/resetPassword', (req, res) => {
-    const temporary_Password = req.body.temporary_Password; // get the temporary password from the request body
-  
-    // hash the new password and confirm password
-    bcrypt.hash(req.body.newPassword, 13, (err, hash) => {
-      if (err) {
-        console.error(err);
-      }
-      const newPasswordHash = hash;
-      
-      bcrypt.hash(req.body.newConfirmPassword, 13, (err, hash) => {
+    const temporary_Password = req.body.temporary_Password;
+    // Check if the temporary password exists in the database.
+    db1.get('SELECT * FROM users WHERE temporary_Password = ?', temporary_Password, (err, row) => {
         if (err) {
-            console.error(err);
-        }
-        const newConfirmPasswordHash = hash;
-  
-        // retrieve the user record from the database based on the temporary password
-        const query = 'SELECT * FROM users WHERE temporary_Password = ?';
-        db1.get(query, [temporary_Password], (err, user) => {
-          if (err) {
-            console.error(err);
-            console.log('SQLite3 query did not successfully executed the user/s email address search properly; therefore this error means a JavaScript codes language error.');
-          } else {
-            console.error(err);
-            console.log('SQLite3 query did successfully executed the user/s email address search properly; therefore this error means a JavaScript codes language error.');
+            console.log('The SQLite3 language query did not successfully execute user\s temporary password correctly from the app.post("/resetPassword")');
+            res.render('error500');
+        } else if (!row) {
+            console.log('The user\s temporary password was not successfully found onto the SQLite3 database.');
+        } else {
+            // Generate a new user password and confirm password in order to update user's data informaton into SQLite3 database.
+            const salt = bcrypt.genSalt(13);
+            const passwordHashed = bcrypt.hash(req.body.password, salt);
+            const confirmPasswordHashed = bcrypt.hash(req.body.confirmPassword, salt);
+             // Compare the passwordHashed and confirmPasswordHashed; in order to ensure they match in values.
+             const passwordsMatch = bcrypt.compare(passwordHashed, confirmPasswordHashed);
 
-          }
-  
-          // update the user's password and confirm password in the database
-          const updateQuery = 'UPDATE users SET password = ?, confirmPassword = ? WHERE temporary_Password = ?';
-          db1.run(updateQuery, [newPasswordHash, newConfirmPasswordHash], temporary_Password, (err) => {
-            if (err) {
-                console.error(err);
-                console.log('The user/s password and confirm password were not properly updated from SQLite3 query app.post(/resetPassword).)')
-            } else {
-            res.redirect('/login'); // redirect to dashboard after password and confirm password are updated
-            console.log('The user/s password and confirm password were properly updated from SQLite3 query app.post(/resetPassword).');
-            };
-          });
-        });
-      });
+             if (passwordsMatch) {
+                console.log('The user\s passwordHashed and confirmPasswordHashed had successfully match.');
+             } else {
+                console.log('The user\s passwordHashed and confirmPasswordHashed did not successfully match.');
+             }
+
+             db1.run('UPDATE users SET password =?, confirmPassword = ? WHERE temporary_Password = ?', [temporary_Password, passwordHashed, confirmPasswordHashed], (err) => {
+                if (err) {
+                    console.error(err);
+                    console.log('The SQlite3 data query had not properly executed from the UPDATE successfully within the Passport and Session.');
+                    res.render('error500');
+                } else {
+                    console.log('The SQlite3 data query had been properly executed from the UPDATE successfully within the Passport and Session.');
+                    res.render('login');
+                }
+            });  
+        }    
     });
-  });
-  
-
-
-
-
-
+});
 
