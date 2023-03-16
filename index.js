@@ -111,8 +111,6 @@ const passport = require('passport');
 */
 const LocalStrategy = require('passport-local').Strategy;
 
-const LocalStrategy2 = require('passport-local').Strategy;
-
 /*
 1. The code const sqliteDB = require('better-sqlite3') is a module that provides a more efficient and convenient
    way to work with SQLite databases in a Node.js application.
@@ -264,10 +262,10 @@ app.use(
                 httpOnly: true,
                 sameSite: 'lax',
                 saveUninitialized: false,
-                maxAge: 'SESSION_MAX_AGE'
+                maxAge: SESSION_MAX_AGE
             }
         }),
-        secret: 'EXPRESS_SESSION_KEY',
+        secret: EXPRESS_SESSION_KEY,
         resave: false,
     })
 )
@@ -479,7 +477,7 @@ the security of their data.
 */
 passport.use(new LocalStrategy({
     usernameField: 'email',
-    passwordField: 'password',
+    passwordField: 'password',   
     passReqToCallback: true // To allow request object to be passed to callback
 },
    
@@ -530,6 +528,7 @@ Overall, serializeUser is an essential function for Passport-based authenticatio
 the back-end server to efficiently manage user sessions and keep track of user authentication.
 */
 passport.serializeUser(function (user, done) {
+    console.log("serializeUser called with user:", user);
     done(null, user.id);
 });
 
@@ -546,8 +545,10 @@ Overall, deserializeUser is an important function in Passport-based authenticati
 allows the server to retrieve user data from sessions and use it to authenticate requests.
 */
 passport.deserializeUser(function(id, done) {
+    console.log("deserializeUser called with id:", id);
     db1.get('SELECT * FROM users WHERE id = ?', id, (err, row) => {
       if (err) { 
+        console.error(err);
         return done(err); 
     }
       if (!row) { 
@@ -779,17 +780,17 @@ app.get('/login', (req, res) => {
     }  
 });
 
-// User route login
+// User route login2
 app.get('/login2', (req, res) => {
     console.log('isUnauthenticated: ', req.isUnauthenticated);
     // Check if user already authenticated.
     if (req.isUnauthenticated) {
         res.render('login2');
-        console.log('User is not logged into the reset Temporary Password!');
+        console.log('The user is not logged into the login2.ejs file authentication session and passport successfully!');
     } else if     
         (req.session.isAuthenticated) {
         res.redirect('/resetPassword');
-        console.log('User is logged into the reset Temporary Password!');
+        console.log('The user is logged into the login2.ejs file authentication session and passport successfully!');
     } else {
         // Render signup page for new users
         res.render('signup');
@@ -963,7 +964,39 @@ app.post(
         failureRedirect: '/login',
         failureFlash: true  
 }));
+/*
+app.post(
+    '/login2',
+    passport.authenticate('local', {
+        successRedirect: '/resetPassword',
+        failureRedirect: '/login2',
+        failureFlash: true  
+    }),
+    (req, res) => {
+        // This function will only be executed if the authentication was successful
+        console.log('Authentication successful!');
+        res.redirect('/resetPassword');
+    }
+);
+*/
 
+app.post('/login2', passport.authenticate('local', {
+    successRedirect: '/resetPassword',
+    failureRedirect: '/login2',
+    failureFlash: true
+  }), (req, res) => {
+    console.log("authenticate middleware called with req.user:", req.user);
+    res.redirect('/resetPassword');
+  });
+
+app.post(
+    '/logout',
+    passport.authenticate('local', {
+    successRedirect: '/home',
+    failureRedirect: '/login',
+    failureFlash: true
+}));
+  
 function generateNewPassword() {
     const length = 20;
     const charset = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()_+-={}[]:";?,./~';
@@ -1112,9 +1145,7 @@ const email = req.body.email;
         }
     });
 });
-
-
-
+/*
 app.post('/resetPassword', (req, res) => {
     const temporary_Password = req.body.temporary_Password;
     // Check if the temporary password exists in the database.
@@ -1151,4 +1182,36 @@ app.post('/resetPassword', (req, res) => {
         }    
     });
 });
+*/
 
+app.post('/login2', (req, res) => {
+    const email = req.body.email;
+    const temporary_Password = req.body.temporary_Password;
+
+    // Check if user email address exists into the SQlite3 database.
+    db1.get('SELECT * FROM users WHERE email = ?', email, (err, row) => {
+        if (err) {
+            console.error(err);
+            console.log('The SQlite3 query did not successfully executed the user\s email address doing the search within passport and session authentication because the user was not successfully found onto the SQLite3 database from the login3.ejs file.');
+            res.render('error403');
+        } else if (!row) {
+            console.error(err);
+            console.log('The user\s email address was not successfully found from the passport and session authentication to the SQLite3 database row.');
+            res.render('login2');
+        } else {
+            //
+            const passwordMatched = bcrypt.compare(temporary_Password, row.temporary_Password);
+            if (passwordMatched) {
+                console.log('The user\s temporary password entered onto the login2.js form did not match to the passport and session authentication that passes the user\s data information to the SQlite3 database from the internet portal.');
+                req.session.usernameField = row.id;
+                res.redirect('/resetPassword');
+            } else {                
+                    console.error(err);
+                    console.log('The user\s temporary password entered onto the login2.js form did not match to the passport and session authentication that passes the user\s data information to the SQlite3 database from the internet portal.');
+                    res.render('login2');
+                } 
+                    
+            }                
+       
+    });
+});
