@@ -20,10 +20,10 @@
 			<br>
 			<span id="emailErrorMessage"></span>
 			<br>
-			<label for="password">Password:</label>
-			<input type="password" id="password" size="75" name="password">
+			<label for="password">Temporary Password:</label>
+			<input type="password" id="temporary_Password" size="75" name="temporary_Password">
 			<br>
-			<span id="passwordErrorMessage"></span>
+			<span id="passwordTemporaryErrorMessage"></span>
 			<br>
 			<button type="submit" >Continue</button>
 		</form>
@@ -58,15 +58,15 @@
 			
 			}	
 			
-			const password = document.getElementById('password').value.trim();
+			const temporary_Password = document.getElementById('temporary_Password').value.trim();
 			
 			const regExPassword = /^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[^a-zA-Z0-9])(?!.*\s).{8,32}$/;
 			
-				if (password === '' || password == null || password.length <= 7 || !password.match(regExPassword)) {
-				document.getElementById('passwordErrorMessage').textContent = 'Your password is a required input field.';
+				if (temporary_Password === '' || temporary_Password == null || temporary_Password.length <= 7 || !temporary_Password.match(regExPassword)) {
+				document.getElementById('passwordTemporaryErrorMessage').textContent = 'Your password is a required input field.';
 			
 				setTimeout(function() {
-					document.getElementById('passwordErrorMessage').textContent = '';
+					document.getElementById('passwordTemporaryErrorMessage').textContent = '';
 				},
 				9000)
 			
