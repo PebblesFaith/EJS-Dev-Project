@@ -178,7 +178,7 @@ const db = new sqliteDB('signUpDatabase_Session.db', { verbose: console.log('Ses
 The code const port = 3000; initializes a constant variable named port with the value 3000. This value is
 the port number that the Express.js application will listen on.
 */
-const port = 3000; 
+const port = 1080; 
 
 /*
 The app.listen() method starts the Express.js application and listens for incoming requests on the port specified 
@@ -430,16 +430,19 @@ app.use('/login', (req, res, next) => {
 });
 
 // Middleware to set req.isUnauthenticated for the first use of the '/login' URL bar
+
 app.use('/login2', (req, res, next) => {
     console.log('middleware called!');
     // Check if user is Already authenticated
     if (!req.session.isAuthenticated) {  
+        console.log('User is not authenticated within the app.use(login2) section');
       
         // User of '/login' URL
         req.isUnauthenticated = true;
     }
     next();
 });
+
 
 // Middleware to set req.isUnauthenticated for the first use of the '/logout' URL bar
 app.use('/logout', (req, res, next) => {
@@ -488,6 +491,7 @@ passport.use(new LocalStrategy({
             return done(null, false, { message: 'Your password and confirm password does not match.'})
             
         } else 
+        // Find the user with the given Email Address.
         db1.get(`SELECT * FROM users WHERE email = ?`, email, (err, row) => {
             if (err) {
                 return done(err);
@@ -495,6 +499,7 @@ passport.use(new LocalStrategy({
             if (!row) {
                 return done(null, false, { message: 'You have entered the incorrect email address.'});
             }
+            // Check if the user's password matches.
             bcrypt.compare(password, row.password, (err, result) => {
                
                     if (err) {
@@ -510,6 +515,41 @@ passport.use(new LocalStrategy({
                 
         });       
     }
+));
+
+passport.use(new LocalStrategy({
+    usernameField: 'email',
+    passwordField: 'temporary_Password',   
+    passReqToCallback: true // To allow request object to be passed to callback
+},
+
+    function(req, email, temporary_Password, done) {
+
+   
+    // Find the user with the given Email Address.
+    db1.get(`SELECT * FROM users WHERE email = ?`, email, (err, row) => {
+        if (err) {
+            return done(err);
+        }
+        if (!row) {
+            return done(null, false, { message: 'You have entered the incorrect email address.'});
+        }
+        // Check if the user's temporary password matches.
+        bcrypt.compare(temporary_Password, row.temporary_Password, (err, result) => {
+            
+            if (err) {
+                return done(err);
+            }
+            if (!result) {
+                return done(null, false, { message: 'You have entered the incorrect temprorary password.'});
+            } else {
+            //return done(null, row);
+            return done(null, row);
+            }
+        }); 
+    })
+    }
+
 ));
 
 /*
@@ -780,28 +820,26 @@ app.get('/login', (req, res) => {
     }  
 });
 
-// User route login2
 app.get('/login2', (req, res) => {
     console.log('isUnauthenticated: ', req.isUnauthenticated);
     // Check if user already authenticated.
     if (req.isUnauthenticated) {
         res.render('login2');
-        console.log('The user is not logged into the login2.ejs file authentication session and passport successfully!');
+        console.log('User is not logged into the passport and session app.get(login2)!');
     } else if     
-        (req.session.isAuthenticated) {
+        (req.isAuthenticated()) {
         res.redirect('/resetPassword');
-        console.log('The user is logged into the login2.ejs file authentication session and passport successfully!');
+        console.log('User is logged into the passport and session app.get(login2)!');
     } else {
         // Render signup page for new users
         res.render('signup');
     }  
 });
-
-
+  
 // User route logout
 app.get('/logout', (req, res) => { 
     if (req.isAuthenticated()) {
-        console.log('User have logged out of the dashboard!');
+        console.log('User have successfully logged out of the passport and session dashboard authentication!');
         res.render('logout');
     } else {      
         res.render('error404');
@@ -964,21 +1002,6 @@ app.post(
         failureRedirect: '/login',
         failureFlash: true  
 }));
-/*
-app.post(
-    '/login2',
-    passport.authenticate('local', {
-        successRedirect: '/resetPassword',
-        failureRedirect: '/login2',
-        failureFlash: true  
-    }),
-    (req, res) => {
-        // This function will only be executed if the authentication was successful
-        console.log('Authentication successful!');
-        res.redirect('/resetPassword');
-    }
-);
-*/
 
 app.post('/login2', passport.authenticate('local', {
     successRedirect: '/resetPassword',
@@ -1145,21 +1168,24 @@ const email = req.body.email;
         }
     });
 });
+
 /*
 app.post('/resetPassword', (req, res) => {
-    const temporary_Password = req.body.temporary_Password;
-    // Check if the temporary password exists in the database.
-    db1.get('SELECT * FROM users WHERE temporary_Password = ?', temporary_Password, (err, row) => {
+    const password = req.body.password;       
+  
+    // Check if the password exists in the database.
+    db1.get('SELECT * FROM users WHERE password = ?', password, (err, row) => {
         if (err) {
-            console.log('The SQLite3 language query did not successfully execute user\s temporary password correctly from the app.post("/resetPassword")');
+            console.log('The SQLite3 language query did not successfully execute user\s password correctly from the app.post("/resetPassword")');
             res.render('error500');
         } else if (!row) {
-            console.log('The user\s temporary password was not successfully found onto the SQLite3 database.');
+            console.log('The user\s password was not successfully found onto the SQLite3 database.');
         } else {
+          
             // Generate a new user password and confirm password in order to update user's data informaton into SQLite3 database.
             const salt = bcrypt.genSalt(13);
-            const passwordHashed = bcrypt.hash(req.body.password, salt);
-            const confirmPasswordHashed = bcrypt.hash(req.body.confirmPassword, salt);
+            const passwordHashed = bcrypt.hashSync(req.body.password, salt);
+            const confirmPasswordHashed = bcrypt.hashSync(req.body.confirmPassword, salt);
              // Compare the passwordHashed and confirmPasswordHashed; in order to ensure they match in values.
              const passwordsMatch = bcrypt.compare(passwordHashed, confirmPasswordHashed);
 
@@ -1169,7 +1195,7 @@ app.post('/resetPassword', (req, res) => {
                 console.log('The user\s passwordHashed and confirmPasswordHashed did not successfully match.');
              }
 
-             db1.run('UPDATE users SET password =?, confirmPassword = ? WHERE temporary_Password = ?', [temporary_Password, passwordHashed, confirmPasswordHashed], (err) => {
+             db1.run('UPDATE users SET password = ?, confirmPassword = ? WHERE password = ?', [passwordHashed, confirmPasswordHashed], (err) => {
                 if (err) {
                     console.error(err);
                     console.log('The SQlite3 data query had not properly executed from the UPDATE successfully within the Passport and Session.');
@@ -1179,7 +1205,8 @@ app.post('/resetPassword', (req, res) => {
                     res.render('login');
                 }
             });  
-        }    
+        }  
+  
     });
 });
 */
@@ -1198,20 +1225,17 @@ app.post('/login2', (req, res) => {
             console.error(err);
             console.log('The user\s email address was not successfully found from the passport and session authentication to the SQLite3 database row.');
             res.render('login2');
-        } else {
+        } else if (row) {
             //
-            const passwordMatched = bcrypt.compare(temporary_Password, row.temporary_Password);
-            if (passwordMatched) {
-                console.log('The user\s temporary password entered onto the login2.js form did not match to the passport and session authentication that passes the user\s data information to the SQlite3 database from the internet portal.');
-                req.session.usernameField = row.id;
-                res.redirect('/resetPassword');
-            } else {                
-                    console.error(err);
-                    console.log('The user\s temporary password entered onto the login2.js form did not match to the passport and session authentication that passes the user\s data information to the SQlite3 database from the internet portal.');
-                    res.render('login2');
-                } 
-                    
-            }                
-       
+            //const passwordMatched = bcrypt.compare(temporary_Password, row.temporary_Password);
+            //if (passwordMatched) {
+            console.log('The user\s temporary password entered onto the login2.js form did not match to the passport and session authentication that passes the user\s data information to the SQlite3 database from the internet portal.');
+                //req.session.userId = row.id;
+            res.redirect('/resetPassword');
+        } else {                
+            console.error(err);
+            console.log('The user\s temporary password entered onto the login2.js form did not match to the passport and session authentication that passes the user\s data information to the SQlite3 database from the internet portal.');
+            res.render('login2');
+        }    
     });
 });
