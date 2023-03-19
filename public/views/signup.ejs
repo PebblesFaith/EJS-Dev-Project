@@ -45,12 +45,8 @@
 			<input type="password" id="confirmPassword" size="75" name="confirmPassword">
 			<br>
 			<span id="confirmPasswordErrorMessage"></span>
-			<br>			
-			<input type="hidden" id="temporary_Password" size="75" name="temporary_Password" value="test">
 			<br>
-			<span id="temporaryPasswordErrorMessage"></span>
-			<br>
-
+			
 			<button type="submit" >Submit</button>
 		</form>
 		<br>
@@ -166,15 +162,7 @@
 				return false;
 
             }
-
-			const temporary_Password = document.getElementById('temporary_Password').value.trim();
-			
-			if (temporary_Password === '' || temporary_Password == null)  {                                                               
-						
-			return false;				
-			
-			}		
-				
+							
 			e.preventDefault();  
 				
 			form.addEventListener('submit', validated);
