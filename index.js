@@ -237,6 +237,58 @@ is suitable for simple data structures.
 app.use(express.urlencoded({ extended: false }));
 
 /*
+The code creates a new instance of the SQLite3 Database using the sqlite3 module in JavaScript. 
+The first argument passed to the constructor is the name of the database file to create or 
+connect to. In this case, the name of the database file is 'users.db'. If there is an error
+during the database connection, the error message will be logged to the console with an 
+appropriate message. If the connection is successful, a message will be logged to the console
+indicating that the connection has been established successfully. The created instance of the 
+SQLite3 database can be used to perform database operations such as inserting, updating, or
+querying data.
+
+This code is useful for developers who want to use a lightweight, serverless SQLite3 database
+for their JavaScript application without the need for a separate server or installation process.
+*/
+const db1 = new sqlite3.Database('users.db', err => {
+    if (err) {
+        console.log('Developer has created the SQLite3 database connection from her JavaScript codes language which has a generated an error, as ' + err + '.');
+    }else {
+        console.log('Developer has created the SQLite3 database connection from her JavaScript codes language which has a generated successfully connection.');
+    }
+});
+
+/*
+The given JavaScript codes language creates a SQLite3 database table named "users"
+if it does not already exist. The "users" table has seven columns, including an 
+auto-incrementing primary key column named "id", and six other columns that store 
+user information such as first name, last name, username, email, password, and 
+confirm password. The first name, last name, username, email, password, and confirm
+password columns are all required and have maximum length limits of 25, 50, and 150
+characters, respectively.
+
+The "serialize" function is called on the database instance, which ensures that all
+database queries within the function are executed sequentially and not concurrently.
+The "run" function is then used to execute the SQLite3 query that creates the "users"
+table, which is wrapped in a template string for easy readability and formatting.
+
+This code snippet is commonly used in web development to create a database table for
+storing user account information, which can be accessed and manipulated as needed.
+*/
+db1.serialize(() => {
+    db1.run(`CREATE TABLE IF NOT EXISTS users (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        firstName VARCHAR (25) NOT NULL,
+        lastName VARCHAR (25) NOT NULL,
+        userName VARCHAR (25) NOT NULL,
+        email VARCHAR (50) NOT NULL,
+        password VARCHAR (150) NOT NULL,
+        confirmPassword VARCHAR (150) NOT NULL,
+        temporary_Password VARCHAR (150) NOT NULL
+    )`);
+});
+
+
+/*
 The code app.use(session(...)); is a middleware function that is used in an Express.js application to enable
 and configure session management. It creates and maintains a server-side session store to store session data 
 between users' requests. In this particular example, the session store is implemented using the
@@ -262,10 +314,10 @@ app.use(
                 httpOnly: true,
                 sameSite: 'lax',
                 saveUninitialized: false,
-                maxAge: SESSION_MAX_AGE
+                maxAge: 'SESSION_MAX_AGE'
             }
         }),
-        secret: EXPRESS_SESSION_KEY,
+        secret: 'EXPRESS_SESSION_KEY',
         resave: false,
     })
 )
@@ -303,9 +355,6 @@ log in every time they navigate to a new page.
 */
 app.use(passport.session());
 
-// Express body parser
-app.use(express.urlencoded({ extended: false }));
-
 /*
 The code app.use(methodOverride('_method')); is a middleware function that is used in an Express.js
 application to enable HTTP method overriding. It allows developers to use HTTP verbs such as PUT
@@ -329,13 +378,146 @@ DELETE, which are not supported by HTML forms, by using a special query paramete
 specify the desired method.
 
 The _method argument passed to the methodOverride() function specifies the name of the parameter or
-header to use for the method override. By default, the middleware looks for the _method parameter in
+header to be use for the method override. By default, the middleware looks for the _method parameter in
 the query string of the request, but this can be customized using the getter option.
 
 Overall, this middleware provides a way to work around the limitations of HTML forms and use all HTTP
 methods in an Express.js application, making it easier to build RESTful APIs and perform CRUD operations.
 */
 app.use(methodOverride('_method'));
+
+/*
+The JavaScript codes language sets up a LocalStrategy for Passport, which is a popular
+authentication middleware for Node.js. It defines a function that will be called when an
+user attempts to log in. The function takes the user's email and password, as an input
+and uses them to search for an user in a SQLite3 database.
+
+If the user is not found, the function returns an error message to the client. If the user
+is found, the function uses the bcrypt library to compare the provided password with the
+stored hashed password. If the passwords match, the function returns the user's data information
+to the client (back-end server).
+
+The passReqToCallback option is set to true, which allows the request object to be passed
+to the callback function, enabling the developer to access other request parameters if 
+necessary. This code provides a simple but effective way to authenticate users and ensure
+the security of their data.
+*/
+passport.use(new LocalStrategy({
+    usernameField: 'email',
+    passwordField: 'password',
+    passReqToCallback: true // To allow request object to be passed to callback
+},
+   
+    function(req, email, password, done) {
+        if (!password) {
+            console.log('User password enter onto the login field:' + password);            
+            console.log('The user passport.use LocalStrategy password and confirm password does not match');
+            return done(null, false, { message: 'Your password and confirm password does not match.'})
+            
+        } else 
+        db1.get(`SELECT * FROM users WHERE email = ?`, email,(err, row) => {
+            if (err) {
+                return done(err);
+            }
+            if (!row) {
+                return done(null, false, { message: 'You have entered the incorrect email address.'});
+            }
+            
+            bcrypt.compare(password, row.password, (err, result) => {
+               
+                if (err) {
+                    return done(err);
+                }
+                if (!result) {
+                    return done(null, false, { message: 'You have entered the incorrect password.'});
+                }
+                //return done(null, row);
+                return done(null, { id: row.id, email: row.email, firstName: row.firstName, lastName: row.lastName, isAuthenticated: true });
+
+            });
+                
+        });       
+    }
+));
+
+/* Check, if user exists onto the SQLite3 database from the passport.use LocalStrategy 
+    (which is actual similar to the "app.post('login2', (req, res) =>" that passes the user data 
+    information through the Session cookie for the user authentication permission which should
+    match to the SQLite3 database's email column. If user passport.use LocalStrategy does not
+    match to the session cookie authentication than the session cookie will not authenticate user
+    data information.
+    */
+passport.use('login2', new LocalStrategy({
+    usernameField: 'email',
+    passwordField: 'password',
+    passReqToCallback: true // To allow request object to be passed to callback
+},        
+    function(req, email, password, done) { 
+        db1.get(`SELECT * FROM users WHERE email = ?`, email, (err, row) => {
+            if (err) {
+                return done(err);
+            }
+            if (!row) {
+                return done(null, false, { message: 'You have entered the incorrect email address.'});
+            }
+            
+            bcrypt.compare(password, row.password, (err, result) => {
+                
+                if (err) {
+                    return done(err);
+                }
+                if (!result) {
+                    return done(null, false, { message: 'You have entered the incorrect password.'});
+                }           
+                return done(null, row);      
+
+            });
+        }) 
+    } 
+));
+    
+/*
+The code passport.serializeUser(function (user, done) { done(null, user.id); }) is a function
+that is used by Passport to serialize the user object for storage in a session.
+
+The serializeUser function takes in a callback function that receives the user object and a
+done callback function as its parameters. The done function is called with null and the
+user's id property as arguments, which is then used to serialize the user object to a string
+representation.
+
+This serialized user data is then stored in the session, allowing the server to persist the
+user's authentication state across requests.
+
+Overall, serializeUser is an essential function for Passport-based authentication, as it enables
+the back-end server to efficiently manage user sessions and keep track of user authentication.
+*/
+passport.serializeUser(function (user, done) {
+    done(null, user.id);
+});
+
+/*
+The code passport.deserializeUser is used by Passport to deserialize the user object from a 
+session. This function takes in the user's id and a callback function done as parameters.
+
+The deserializeUser function first queries the database using the user's id to retrieve
+the user's information. If the user is not found, the function returns a false value to 
+the done callback function. If the user is found, the function returns an object containing 
+the user's id, email, firstName, and lastName to the done callback function.
+
+Overall, deserializeUser is an important function in Passport-based authentication, as it 
+allows the server to retrieve user data from sessions and use it to authenticate requests.
+*/
+passport.deserializeUser(function(id, done) {
+    db1.get('SELECT * FROM users WHERE id = ?', id, (err, row) => {
+      if (err) { 
+        return done(err); 
+    }
+      if (!row) { 
+        return done(null, false); 
+    }
+      return done(null, { id: row.id, email: row.email, firstName: row.firstName, lastName: row.lastName });
+    });
+  });
 
 
 // Middleware to set req.isUnauthenticated for the first use of the '/dashboard' URL bar
@@ -432,13 +614,11 @@ app.use('/login', (req, res, next) => {
     next();
 });
 
-// Middleware to set req.isUnauthenticated for the first use of the '/login' URL bar
-
+// Middleware to set req.isUnauthenticated for the first use of the '/login2' URL bar
 app.use('/login2', (req, res, next) => {
     console.log('middleware called!');
     // Check if user is Already authenticated
     if (!req.session.isAuthenticated) {  
-        console.log('User is not authenticated within the app.use(login2) section');
       
         // User of '/login' URL
         req.isUnauthenticated = true;
@@ -463,110 +643,6 @@ app.use('/resetPassword', (req, res, next) => {
     }
     next();
 });
-
-/*
-The JavaScript codes language sets up a LocalStrategy for Passport, which is a popular
-authentication middleware for Node.js. It defines a function that will be called when an
-user attempts to log in. The function takes the user's email and password, as an input
-and uses them to search for an user in a SQLite3 database.
-
-If the user is not found, the function returns an error message to the client. If the user
-is found, the function uses the bcrypt library to compare the provided password with the
-stored hashed password. If the passwords match, the function returns the user's data information
-to the client (back-end server).
-
-The passReqToCallback option is set to true, which allows the request object to be passed
-to the callback function, enabling the developer to access other request parameters if 
-necessary. This code provides a simple but effective way to authenticate users and ensure
-the security of their data.
-*/
-passport.use(new LocalStrategy({
-    usernameField: 'email',
-    passwordField: 'password',   
-    passReqToCallback: true // To allow request object to be passed to callback
-},
-   
-    function(req, email, password, done) {
-        
-        if (!password) {
-            console.log('User password enter onto the login field:' + password);            
-            console.log('The user passport.use LocalStrategy password and confirm password does not match');
-            return done(null, false, { message: 'Your password and confirm password does not match.'})
-            
-        } else 
-        // Find the user with the given Email Address.
-        db1.get(`SELECT * FROM users WHERE email = ?`, email, (err, row) => {
-            if (err) {
-                return done(err);
-            }
-            if (!row) {
-                return done(null, false, { message: 'You have entered the incorrect email address.'});
-            }
-            // Check if the user's password matches.
-            bcrypt.compare(password, row.password, (err, result) => {
-               
-                    if (err) {
-                        return done(err);
-                    }
-                    if (!result) {
-                        return done(null, false, { message: 'You have entered the incorrect password.'});
-                    }
-                    //return done(null, row);
-                    return done(null, { id: row.id, email: row.email, firstName: row.firstName, lastName: row.lastName, isAuthenticated: true });
-
-            });
-                
-        });       
-    }
-));
-
-/*
-The code passport.serializeUser(function (user, done) { done(null, user.id); }) is a function
-that is used by Passport to serialize the user object for storage in a session.
-
-The serializeUser function takes in a callback function that receives the user object and a
-done callback function as its parameters. The done function is called with null and the
-user's id property as arguments, which is then used to serialize the user object to a string
-representation.
-
-This serialized user data is then stored in the session, allowing the server to persist the
-user's authentication state across requests.
-
-Overall, serializeUser is an essential function for Passport-based authentication, as it enables
-the back-end server to efficiently manage user sessions and keep track of user authentication.
-*/
-passport.serializeUser(function (user, done) {
-    console.log("serializeUser called with user:", user);
-    console.log("This is the user.id: " + user.id + '.');
-    done(null, user.id);
-    
-});
-
-/*
-The code passport.deserializeUser is used by Passport to deserialize the user object from a 
-session. This function takes in the user's id and a callback function done as parameters.
-
-The deserializeUser function first queries the database using the user's id to retrieve
-the user's information. If the user is not found, the function returns a false value to 
-the done callback function. If the user is found, the function returns an object containing 
-the user's id, email, firstName, and lastName to the done callback function.
-
-Overall, deserializeUser is an important function in Passport-based authentication, as it 
-allows the server to retrieve user data from sessions and use it to authenticate requests.
-*/
-passport.deserializeUser(function(id, done) {
-    console.log("deserializeUser called with id:", id);
-    db1.get('SELECT * FROM users WHERE id = ?', id, (err, row) => {
-      if (err) { 
-        console.error(err);
-        return done(err); 
-    }
-      if (!row) { 
-        return done(null, false); 
-    }
-      return done(null, { id: row.id, email: row.email, firstName: row.firstName, lastName: row.lastName });
-    });
-  });
 
 /*
 The code app.set('views', './public/views') is used to set the directory where the server
@@ -615,7 +691,6 @@ The route handler function checks if the user is authenticated using the req.isA
 method provided by Passport.js. If the user is authenticated, the home template is rendered using the
 res.render() method. If the user is not authenticated, the error404 template is rendered.
 */
-
 app.get('/', (req, res) => { 
     if (req.isUnauthenticated()) {
         res.render('home');
@@ -624,19 +699,7 @@ app.get('/', (req, res) => {
     }    
 });
 
-// 1. Define a route for the deserializeUser called with id.
-app.get('/dashboard', (req, res) => {
-    if (req.isAuthenticated()) {
-        console.log(req.user);
-        console.log('User had been successfully authenticated within the Session through the passport from the dashboard!');
-        res.render('dashboard', { firstName: req.user.firstName, lastName: req.user.lastName, email: req.user.email});
-    } else {
-        res.render('login')
-        console.log('User is not successfully authenticated within the session through the passport from the dashboard!');
-    }
-});
-
-// 2. User route error403 deserializeUser called with Id.
+// User route error403
 app.get('/error403', (req, res) => {
     // Check if user already authenticated.
     if (req.session.isAuthenticated) {
@@ -651,7 +714,7 @@ app.get('/error403', (req, res) => {
     }  
 });
 
-// 3. User route error403 deserializeUser called with Id.
+// User route error403
 app.get('/error404', (req, res) => {
     // Check if user already authenticated.
     if (req.session.isAuthenticated) {
@@ -666,7 +729,7 @@ app.get('/error404', (req, res) => {
     }  
 });
 
-// 4. User route error500 deserializeUser called with Id.
+// User route error500
 app.get('/error500', (req, res) => {
     // Check if user already authenticated.
     if (req.session.isAuthenticated) {
@@ -681,16 +744,11 @@ app.get('/error500', (req, res) => {
     }  
 });
 
-// 5. User route forgotPassword deserializeUser called with id.
+// User route forgotPassword
 app.get('/forgotPassword', (req, res) => {
     // Check if user already authenticated.
-    if (req.session.isAuthenticated) {
-        res.render('login2'); 
-        console.log('User had been successfully authenticated within the Session through the passport from forgotPassword webpage!');
-    }
-    // Check if this is the first use of '/forgotPassword' route URL bar
     if (req.isUnauthenticated) {
-        console.log('User had not been successfully authenticated within the Session through the passport from forgotPassword webpage!');
+        console.log('User had been successfully authenticated within the Session through the passport from forgotPassword webpage!');
         res.render('forgotPassword');
     } else {
         // Render signup page for new users
@@ -699,7 +757,7 @@ app.get('/forgotPassword', (req, res) => {
     }  
 });
 
-// 6. User route forgotUsername deserializeUser called with id.
+// User route forgotUsername
 app.get('/forgotUsername', (req, res) => {
     // Check if user already authenticated.
     if (req.session.isAuthenticated) {
@@ -714,7 +772,7 @@ app.get('/forgotUsername', (req, res) => {
     }  
 });
 
-// 7. User route forgotUsername deserializeUser called with id.
+// User route forgotUsername
 app.get('/home', (req, res) => {
     // Check if user already authenticated.
     if (req.session.isAuthenticated) {
@@ -729,81 +787,7 @@ app.get('/home', (req, res) => {
     }  
 });
 
-// 8. User route login deserializeUser called with id.
-app.get('/login', (req, res) => {
-    console.log('isUnauthenticated: ', req.isUnauthenticated);
-    // Check if user already authenticated.
-    if (req.isUnauthenticated) {
-        res.render('login');
-        console.log('User is not logged into the dashboard!');
-    } else if     
-        (req.session.isAuthenticated) {
-        res.redirect('/dashboard');
-        console.log('User is logged into the dashboard!');
-    } else {
-        // Render signup page for new users
-        res.render('signup');
-    }  
-});
-
-// 9. User route login2 deserializeUser called with id.
-app.get('/login2', (req, res) => {
-    console.log('isUnauthenticated: ', req.isUnauthenticated);
-    // Check if user already authenticated.
-    if (req.isUnauthenticated) {
-        res.render('login2');
-        console.log('User is not logged into the passport and session app.get(login2)!');
-    } else if     
-        (req.isAuthenticated()) {
-        res.redirect('/resetPassword');
-        console.log('User is logged into the passport and session app.get(login2)!');
-    } else {
-        // Render signup page for new users
-        res.render('signup');
-    }  
-});
-  
-// 10. User route logout deserializeUser called with id.
-app.get('/logout', (req, res) => { 
-    if (req.isAuthenticated()) {
-        console.log('User have successfully logged out of the passport and session dashboard authentication app.get login!');
-        res.render('logout');
-    } else {      
-        res.render('error404');
-    }  
-});
-
-// 11. User route resetPassword deserializeUser called with id.
-app.get('/resetPassword', (req, res) => {
-    // Check if user already authenticated.
-    if (req.session.isAuthenticated) {
-        return alert('You are already logged in!');
-    }
-    // Check if this is the first use of '/resetPassword' route URL bar
-    if (req.isUnauthenticated) {
-        res.render('resetPassword');
-    } else {
-        // Render signup page for new users
-        res.render('error403');
-    }  
-});
-
-// 12. User route signup deserializeUser called with id.
-app.get('/signup', (req, res) => {
-    // Check if user already authenticated.
-    if (req.session.isAuthenticated) {
-        return alert('You are already logged in!');
-    }
-    // Check if this is the first use of '/signup' route URL bar
-    if (req.isUnauthenticated) {
-        res.render('signup');
-    } else {
-        // Render signup page for new users
-        res.render('signup')
-    }  
-});
-
-// 13. User route verifyEmail deserializeUser called with id.
+// User route verifyEmail
 app.get('/verifyEmail', (req, res) => {
     // Check if user already authenticated.
     if (req.session.isAuthenticated) {
@@ -818,7 +802,22 @@ app.get('/verifyEmail', (req, res) => {
     }  
 });
 
-// Delete a route for the logout 
+// User route signup
+app.get('/signup', (req, res) => {
+    // Check if user already authenticated.
+    if (req.session.isAuthenticated) {
+        return alert('You are already logged in!');
+    }
+    // Check if this is the first use of '/signup' route URL bar
+    if (req.isUnauthenticated) {
+        res.render('signup');
+    } else {
+        // Render signup page for new users
+        res.render('signup')
+    }  
+});
+
+// Delete a route for the logout page
 app.delete('/logout', (req, res) => {  
     if (req.isAuthenticated()) {
     
@@ -845,55 +844,72 @@ app.delete('/logout', (req, res) => {
     );    
 });
 
-/*
-The code creates a new instance of the SQLite3 Database using the sqlite3 module in JavaScript. 
-The first argument passed to the constructor is the name of the database file to create or 
-connect to. In this case, the name of the database file is 'users.db'. If there is an error
-during the database connection, the error message will be logged to the console with an 
-appropriate message. If the connection is successful, a message will be logged to the console
-indicating that the connection has been established successfully. The created instance of the 
-SQLite3 database can be used to perform database operations such as inserting, updating, or
-querying data.
+// User route login
+app.get('/login', (req, res) => {
+    console.log('isUnauthenticated: ', req.isUnauthenticated);
+    // Check if user already authenticated.
+    if (req.isUnauthenticated) {
+        res.render('login');
+        console.log('User is not logged into the dashboard!');
+    } else if     
+        (req.session.isAuthenticated) {
+        res.redirect('/dashboard');
+        console.log('User is logged into the dashboard!');
+    } else {
+        // Render signup page for new users
+        res.render('signup');
+    }  
+});
 
-This code is useful for developers who want to use a lightweight, serverless SQLite3 database
-for their JavaScript application without the need for a separate server or installation process.
-*/
-const db1 = new sqlite3.Database('users.db', err => {
-    if (err) {
-        console.log('Developer has created the SQLite3 database connection from her JavaScript codes language which has a generated an error, as ' + err + '.');
-    }else {
-        console.log('Developer has created the SQLite3 database connection from her JavaScript codes language which has a generated successfully connection.');
+// User route logout
+app.get('/logout', (req, res) => { 
+    if (req.isAuthenticated()) {
+        console.log('The User have successfully logged out of the dashboard!');
+        res.render('logout');
+    } else {      
+        res.render('error404');
+    }  
+});
+
+// User route login
+app.get('/login2', (req, res) => {
+    console.log('isUnauthenticated: ', req.isUnauthenticated);
+    // Check if user already authenticated.
+    if (req.isUnauthenticated) {
+        res.render('login2');
+        console.log('User is not logged into the login2 reset password!');
+    } else if     
+        (req.session.isAuthenticated) {
+        res.redirect('/resetPassword');
+        console.log('User is has successfully logged into the login2 reset password authentication!');
+    } else {
+        // Render signup page for new users
+        res.render('error403');
+    }  
+});
+
+// Define a route for the login page
+
+app.get('/dashboard', (req, res) => {
+    if (req.isAuthenticated()) {
+        console.log(req.user);
+        console.log('User had been successfully authenticated within the Session through the passport from dashboard!');
+        res.render('dashboard', { firstName: req.user.firstName, lastName: req.user.lastName, email: req.user.email});
+    } else {
+        res.render('login')
+        console.log('User is not successfully authenticated within the session through the passport from dashboard!');
     }
 });
 
-/*
-The given JavaScript codes language creates a SQLite3 database table named "users"
-if it does not already exist. The "users" table has seven columns, including an 
-auto-incrementing primary key column named "id", and six other columns that store 
-user information such as first name, last name, username, email, password, and 
-confirm password. The first name, last name, username, email, password, and confirm
-password columns are all required and have maximum length limits of 25, 50, and 150
-characters, respectively.
-
-The "serialize" function is called on the database instance, which ensures that all
-database queries within the function are executed sequentially and not concurrently.
-The "run" function is then used to execute the SQLite3 query that creates the "users"
-table, which is wrapped in a template string for easy readability and formatting.
-
-This code snippet is commonly used in web development to create a database table for
-storing user account information, which can be accessed and manipulated as needed.
-*/
-db1.serialize(() => {
-    db1.run(`CREATE TABLE IF NOT EXISTS users (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        firstName VARCHAR (25) NOT NULL,
-        lastName VARCHAR (25) NOT NULL,
-        userName VARCHAR (25) NOT NULL,
-        email VARCHAR (50) NOT NULL,
-        password VARCHAR (150) NOT NULL,
-        confirmPassword VARCHAR (150) NOT NULL
-        
-    )`);
+app.get('/resetPassword', (req, res) => {
+    if (req.isAuthenticated()) {
+        console.log(req.user);
+        console.log('The User had been successfully authenticated within the Session through the passport from reset password webpage!');
+        res.render('resetPassword', { firstName: req.user.firstName, lastName: req.user.lastName});
+    } else {
+        res.render('resetPassword')
+        console.log('The user is not successfully authenticated within the session through the passport from reset password webpage!');
+    }
 });
 
 /*
@@ -923,7 +939,8 @@ app.post('/signup', async(req, res) => {
     const userName = req.body.userName;
     const email = req.body.email;
     const password = req.body.password;
-    const confirmPassword = req.body.confirmPassword;  
+    const confirmPassword = req.body.confirmPassword;
+    const temporary_Password = req.body.temporary_Password;
 
     console.log(req.body);
     console.log('User first name: ' + firstName + '.');
@@ -932,7 +949,7 @@ app.post('/signup', async(req, res) => {
     console.log('User email is: ' + email + '.');
     console.log('User password is: ' + password + '.');
     console.log('User confirm password is: ' + confirmPassword + '.');
-    
+    console.log('User temporary password is: ' + temporary_Password + '.');
     console.log(req.session);
     
    // Hash the password field using bcrypt.
@@ -946,18 +963,15 @@ app.post('/signup', async(req, res) => {
     const passwordsMatch = await bcrypt.compare(passwordHashed, confirmPasswordHashed);
     if (passwordsMatch) {
         console.log('The user passwordHashed and confirmPasswordHashed did not match.');
-        //return done(null, false, { message: 'Password do not match.'}); 
-        //return res.render('signup');    //or res.render('signup', { message: 'Password do not match})
-       
+        //return done(null, false, { message: 'Password do not match.'});
+        return res.render('signup');    //or res.render('signup', { message: 'Password do not match})
     } else {
-        //return res.render('login');    //or res.render('signup', { message: 'Password do not match})
-        console.log('The user passwordHashed and confirmPasswordHashed successfully match');        
-        
+        console.log('The user passwordHashed and confirmPasswordHashed successfully match');
     }   
 
     // Insert the user data information in the SQLite3 database.
-    db1.run(`INSERT INTO users (firstName, lastName, userName, email, password, confirmPassword) VALUES (?,?,?,?,?,?)`,         
-    [firstName, lastName, userName, email, passwordHashed, confirmPasswordHashed],
+    db1.run(`INSERT INTO users (firstName, lastName, userName, email, password, confirmPassword, temporary_Password) VALUES (?,?,?,?,?,?,?)`,         
+    [firstName, lastName, userName, email, passwordHashed, confirmPasswordHashed, temporary_Password],
         function(err) {
             if(err) {
                 console.log(err.message);
@@ -968,6 +982,10 @@ app.post('/signup', async(req, res) => {
         });
     });   
 
+// When the user login from using the middleware function that checks, if the user
+// is already authenticated or not authenticated is causing the middleware
+// to set to false from the above middleware.
+
 app.post(
     '/login',
     passport.authenticate('local', {
@@ -977,30 +995,30 @@ app.post(
 }));
 
 app.post(
-    '/forgotPassword',
+    '/logout',
     passport.authenticate('local', {
-        successRedirect: '/login2',
-        failureRedirect: '/forgotPassword',
+        successRedirect: '/login',
+        failureRedirect: '/logout',
         failureFlash: true  
 }));
 
-app.post('/login2', passport.authenticate('local', {
-    successRedirect: '/resetPassword',
-    failureRedirect: '/login2',
-    failureFlash: true
-  }), (req, res) => {
-    console.log("authenticate middleware called with req.user:", req.user);
-    res.redirect('/resetPassword');
-  });
+app.post(
+    '/resetPassword',
+    passport.authenticate('local', {
+        successRedirect: '/logout',
+        failureRedirect: '/resetPassword',
+        failureFlash: true  
+}));
 
 app.post(
-    '/logout',
-    passport.authenticate('local', {
-    successRedirect: '/home',
-    failureRedirect: '/login',
-    failureFlash: true
+    '/login2',
+    passport.authenticate('login2', {
+        successRedirect: '/resetPassword',
+        failureRedirect: '/login2',
+        failureFlash: true 
 }));
-  
+
+
 function generateNewPassword() {
     const length = 20;
     const charset = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()_+-={}[]:";?,./~';
@@ -1038,114 +1056,112 @@ const email = req.body.email;
     db1.get('SELECT * FROM users WHERE email = ?', email, (err, row) => {
         if (err) {
         console.error(err);
-        console.log('SQLite3 query did not successfully executed the user/s email address search properly; therefore this error means a JavaScript codes language error.');
+        console.log('SQLite3 language did not successfully execute user/s email address search properly; therefore this error means a JavaScript codes language error.');
         res.render('error500');
 
         } else if (!row) {
         res.render('/forgotPassword', { error: 'Email not found' });
-        console.log('User/s email address was not authenticated within the Session and Passport, as found.')
+        console.log('User/s email was not successfully found onto the SQlite3 database.')
         } else {
-            console.log('User/s email address was authenticated within the Session and Passport, as found.')
-            render('login2');
-        // Generate a new user's password then update the user's record into the SQLite3 database.
+        // Generate a new password and update the user's record in the database
       
-            const newPassword = generateNewPassword();
-            const hash = bcrypt.hashSync(newPassword, 13);
-        
-            db1.run('UPDATE users SET password = ? WHERE email = ?', hash, email, (err) => {
-                if (err) {
-                
-                    console.log('The SQlite3 query data have not been properly executed from the passport and session and, the user/s UPDATED data information had been successfully posted to the SQLite3 database.');
-                
-                } else {
-                // Send the new password to the user's email to nodemailer 
-                //sendEmail(email, 'New password', `Your new password is: ${newPassword}`);
+        const newPassword = generateNewPassword();
+        const hash = bcrypt.hashSync(newPassword, 13);
+       
+        db1.run('UPDATE users SET password = ? WHERE email = ?', hash, email, (err) => {
+            if (err) {
+            console.error(err);
+            console.log('SQlite3 language had not properly execute the UPDATE correctly.')
+            res.render('error500');
+            } else {
+            // Send the new password to the user's email to nodemailer 
+            //sendEmail(email, 'New password', `Your new password is: ${newPassword}`);
 
-                console.error(err);
-                console.log('The SQlite3 query have been properly executed, the user/s UPDATE correctly.');
-                //res.render('error500');               
+            res.redirect('/login2');
+            console.log('SQlite3 language had properly execute the UPDATE successfully for the user.')
+
+            /*
+            Sarai Hannah Ajai has generated a test SMTP service account; in order to receive AccouNetrics' customercare@ionos.com emails from the 
+            'transporter' constant object from the AccouNetrics' users which pass through the 'nodemailer' API library.
+            */
+            const transporter = nodemailer.createTransport ({
+                host: 'smtp.ionos.com',
+                port: 587,
+                secure: false,
+                auth: {
+                    user: 'testdevelopmentenvcustomercare@ivoteballot.com',
+                    pass: IONOS_SECRET_KEY,
+                }
+            });            
+            
+            if (req.isAuthenticated()) {
+                /*
+                Sarai Hannah Ajai has written her JavaScript programmatic codes for creating a usable 'transporter' constant object by ways of
+                using the default SMTP transporter nodemailer API library.
+                */
+                const mailOptions_01 = {
+                    from: req.body.email,
+                    to: 'testdevelopmentenvcustomercare@ivoteballot.com', 
+                    subject: `iVoteBallot has a New Online Voter Registration Not Yet Verified`,  
+                    text: `iVoteBallot new online voter registration name is:
+                    ${req.user.firstName} ${req.user.lastName}
+                    and ${req.user.firstName} ${req.user.lastName} has been sent an iVoteBallot's verification link registration in order to verify his/her
+                    email account, ${req.user.email}.`,     
+                };
+
+                const mailOptions_02 = {
+                    from: 'testdevelopmentenvcustomercare@ivoteballot.com',
+                    to: req.body.email, 
+                    subject: `Authenticate your iVoteBallot's Email Address Link`,
+                    html: `
+                    
+                    <p>Dear ${req.user.firstName} ${req.user.lastName},</p>
+
+                    <p>Please click onto the following link in order to authenticate your email address:<p>
+
+                    <p>Your new temporary password is: ${newPassword}</p;
+                
+                    <br>
+                    
+                    <p>and, your email address verification code will expire in 10 minutes. </p>
+                    <br>        
+                    <p>Respectfully, </p>
+                    
+                    <br>
+
+                    <p>iVoteBallot's Customer Care Team </p>
+                    
+                    `,          
+                };
 
                 /*
-                Sarai Hannah Ajai has generated a test SMTP service account; in order to receive AccouNetrics' customercare@ionos.com emails from the 
-                'transporter' constant object from the AccouNetrics' users which pass through the 'nodemailer' API library.
+                Sarai Hannah Ajai has written her JavaScript programmatic codes to send an user test email to AccouNetrics' customercare@accounetrics.com
+                email account with nodemailer defined transporter object.
                 */
-                const transporter = nodemailer.createTransport ({
-                    host: 'smtp.ionos.com',
-                    port: 587,
-                    secure: false,
-                    auth: {
-                        user: 'testdevelopmentenvcustomercare@ivoteballot.com',
-                        pass: IONOS_SECRET_KEY,
-                    }
-                });            
                 
-                if (req.isAuthenticated()) {
-                    /*
-                    Sarai Hannah Ajai has written her JavaScript programmatic codes for creating a usable 'transporter' constant object by ways of
-                    using the default SMTP transporter nodemailer API library.
-                    */
-                    const mailOptions_01 = {
-                        from: req.body.email,
-                        to: 'testdevelopmentenvcustomercare@ivoteballot.com', 
-                        subject: `iVoteBallot has a New Online Voter Registration Not Yet Verified`,  
-                        text: `iVoteBallot new online voter registration name is:
-                        ${req.user.firstName} ${req.user.lastName}
-                        and ${req.user.firstName} ${req.user.lastName} has been sent an iVoteBallot's verification link registration in order to verify his/her
-                        email account, ${req.user.email}.`,     
-                    };
+                transporter.sendMail(mailOptions_01, (error, info) => {
+                    if (error) {
+                      console.log(error);
+                    } else {
+                      console.log('Email Sent: ' + info.response);
+                    }
+                  });                
 
-                    const mailOptions_02 = {
-                        from: 'testdevelopmentenvcustomercare@ivoteballot.com',
-                        to: req.body.email, 
-                        subject: `You have Successfully Authenticate Your iVoteBallot's Email Address`,
-                        html: `
-                        
-                        <p>Dear ${req.user.firstName} ${req.user.lastName}:</p>                    
+                  transporter.sendMail(mailOptions_02, (error, info) => {
+                    if (error) {
+                      console.log(error);
+                      res.send('error');
+                    } else {
+                      console.log('Email Sent: ' + info.response);
+                      res.send('success!');
+                    }
+                  });                  
+                  
+            } else {
+                res.render('error404');
+                console.log('The nodemailer user could not be authenticated.');
 
-                        <p>We are pleased to inform you that your temporary password is: ${newPassword}</p;               
-                        <br>
-                        <p>And, please use this password to verify your temporary access. Once you have logged
-                        in, we encourage you to change your password; in order to keep your iVoteBallot's
-                        account secure.                       
-                        <p>                                       
-                        
-                        <p>Thank you for using our iVoteBallot's services</p>                    
-                        
-                        <p>Respectfully Yours,</p>
-                        
-                        <p>iVoteBallot's Customer Care Team </p>
-                        
-                        `,          
-                    };
-
-                    /*
-                    Sarai Hannah Ajai has written her JavaScript programmatic codes to send an user test email to AccouNetrics' customercare@accounetrics.com
-                    email account with nodemailer defined transporter object.
-                    */
-                    
-                    transporter.sendMail(mailOptions_01, (error, info) => {
-                        if (error) {
-                        console.log(error);
-                        } else {
-                        console.log('Email Sent: ' + info.response);
-                        }
-                    });                
-
-                    transporter.sendMail(mailOptions_02, (error, info) => {
-                        if (error) {
-                        console.log(error);
-                        res.send('error');
-                        } else {
-                        console.log('Email Sent: ' + info.response);
-                        res.send('success!');
-                        }
-                    });                  
-                    
-                } else {
-                    res.render('error404');
-                    console.log('The nodemailer user could not be authenticated.');
-
-                }
+            }
                           
             }
         });
@@ -1153,76 +1169,50 @@ const email = req.body.email;
     });
 });
 
-app.post('/login2', (req, res) => {
-    const email = req.body.email;
-    const temporary_Password = req.body.password;
+app.post('/resetPassword', async (req, res) => {
+   const password = req.body.password;
+   const confirmPassword = req.body.confirmPassword;   
 
-    // Check if user email address exists into the SQlite3 database.
-    db1.get('SELECT * FROM users WHERE email = ?', email, (err, row) => {
+   // Hash the password field using bcrypt.
+   const salt = await bcrypt.genSalt(13);  
+   const passwordHashed = await bcrypt.hash(req.body.password, salt); 
+
+   // Hash the confirmPassword field using the same salt, as the password field.
+   const confirmPasswordHashed = await bcrypt.hash(req.body.confirmPassword, salt);
+   
+   console.log('The user password and confirm password has been hashed and salted.');
+
+   // Compare the passwordHashed to the confirmPasswordHashed in order ensure they match in values.
+   //const passwordsMatch = await bcrypt.compare(passwordHashed, confirmPasswordHashed);
+
+   /*
+   if (!passwordsMatch) {
+       console.log('The user passwordHashed and confirmPasswordHashed did not match.');
+       //return done(null, false, { message: 'Password do not match.'});
+       return res.render('signup');    //or res.render('signup', { message: 'Password do not match})
+   } else {
+       console.log('The user passwordHashed and confirmPasswordHashed successfully match.');
+   }  
+   */         
+        
+   db1.run('UPDATE users SET password = ?, confirmPassword = ? WHERE email = ?', [passwordHashed, confirmPasswordHashed, req.user.email], (err) => {
+
         if (err) {
-            console.error(err);
-            console.log('The SQlite3 query did not successfully executed the user\s email address doing the search within passport and session authentication because the user was not successfully found onto the SQLite3 database from the login3.ejs file.');
-            res.render('error403');
-        } else if (!row) {
-            console.error(err);
-            console.log('The user\s email address was not successfully found from the passport and session authentication to the SQLite3 database row.');
-            res.render('login2');
-        } else if (row) {
-            //
-            const passwordMatched = bcrypt.compare(password, row.password);
-            if (passwordMatched) {
-            console.log('The user\s temporary password entered onto the login2.js form did not match to the passport and session authentication that passes the user\s data information to the SQlite3 database from the internet portal.');
-                //req.session.userId = row.id;
-            res.redirect('/resetPassword');
-            } else {                
-                console.error(err);
-                console.log('The user\s temporary password entered onto the login2.js form did not match to the passport and session authentication that passes the user\s data information to the SQlite3 database from the internet portal.');
-                res.render('login2');
-            }    
-        }
-    });
-});
-
-
-/*
-app.post('/resetPassword', (req, res) => {
-    const password = req.body.password;       
-  
-    // Check if the password exists in the database.
-    db1.get('SELECT * FROM users WHERE password = ?', password, (err, row) => {
-        if (err) {
-            console.log('The SQLite3 language query did not successfully execute user\s password correctly from the app.post("/resetPassword")');
-            res.render('error500');
-        } else if (!row) {
-            console.log('The user\s password was not successfully found onto the SQLite3 database.');
+        console.error(err);
+        console.log('The SQlite3 language had not properly execute the UPDATE correctly for the user new password from the reset password.')
+        res.render('error500');
         } else {
-          
-            // Generate a new user password and confirm password in order to update user's data informaton into SQLite3 database.
-            const salt = bcrypt.genSalt(13);
-            const passwordHashed = bcrypt.hashSync(req.body.password, salt);
-            const confirmPasswordHashed = bcrypt.hashSync(req.body.confirmPassword, salt);
-             // Compare the passwordHashed and confirmPasswordHashed; in order to ensure they match in values.
-             const passwordsMatch = bcrypt.compare(passwordHashed, confirmPasswordHashed);
+        // Send the new password to the user's email to nodemailer 
+        //sendEmail(email, 'New password', `Your new password is: ${newPassword}`);
 
-             if (passwordsMatch) {
-                console.log('The user\s passwordHashed and confirmPasswordHashed had successfully match.');
-             } else {
-                console.log('The user\s passwordHashed and confirmPasswordHashed did not successfully match.');
-             }
+        res.redirect('/login');
+        console.log('The SQlite3 language had properly execute the UPDATE successfully for the user new password from the reset password webpage.');
 
-             db1.run('UPDATE users SET password = ?, confirmPassword = ? WHERE password = ?', [passwordHashed, confirmPasswordHashed], (err) => {
-                if (err) {
-                    console.error(err);
-                    console.log('The SQlite3 data query had not properly executed from the UPDATE successfully within the Passport and Session.');
-                    res.render('error500');
-                } else {
-                    console.log('The SQlite3 data query had been properly executed from the UPDATE successfully within the Passport and Session.');
-                    res.render('login');
-                }
-            });  
-        }  
-  
+        }
+        
     });
 });
-*/
+
+
+
 
