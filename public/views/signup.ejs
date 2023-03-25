@@ -12,9 +12,6 @@
 		<header>
 			<%- include('../common/header') %>
 		</header>
-		
-		<h1>Signup</h1>
-		
 		<form action="/signup" onsubmit="return validated()" method="POST" >
 			<label for="first-name">First Name:</label>
 			<input type="text" id="firstname" size="25" name="firstName">
@@ -46,7 +43,12 @@
 			<br>
 			<span id="confirmPasswordErrorMessage"></span>
 			<br>
-			
+			<br>			
+			<input type="hidden" id="temporary_Password" size="75" name="temporary_Password" value="test">
+			<br>
+			<span id="temporaryPasswordErrorMessage"></span>
+			<br>		
+
 			<button type="submit" >Submit</button>
 		</form>
 		<br>
@@ -162,6 +164,14 @@
 				return false;
 
             }
+
+			const temporary_Password = document.getElementById('temporary_Password').value.trim();
+			
+			if (temporary_Password === '' || temporary_Password == null)  {                                                               
+						
+			return false;				
+			
+			}		
 							
 			e.preventDefault();  
 				
