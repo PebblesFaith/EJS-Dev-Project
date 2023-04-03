@@ -1,5 +1,14 @@
 # EJS-Dev-Project
 
+Dated March 25, 2023
+
+Hi everyone, I have created an user's reset password flowchart for an extra illustration to you of my user's reset password logical thought process.
+
+![User Reset Password Flow Chart](https://user-images.githubusercontent.com/42658881/227750755-4f492adf-3d0a-4547-9232-7835a40e11fb.jpg)
+
+
+
+
 Dated March 14, 2023
 
 Dear concerned authorities,
