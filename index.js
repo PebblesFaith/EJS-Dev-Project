@@ -145,7 +145,9 @@ short-lived messages that are stored in the session and displayed to the user on
 connect-flash, you can easily create and manage flash messages in your application, which can be used to
 display success messages, error messages, or any other kind of notification to the user.
 */
-const flash = require('connect-flash');
+const flash = require('express-flash');
+
+const { check, matchedData } = require('express-validator');
 
 /*
 The code const methodOverride = require('method-override'); imports the method-override module, which
@@ -316,7 +318,7 @@ app.use(
                 httpOnly: true,
                 sameSite: true,
                 saveUninitialized: false,
-                maxAge: SESSION_MAX_AGE
+                maxAge: { SESSION_MAX_AGE }
             }
         }),
         secret: 'EXPRESS_SESSION_KEY',
@@ -523,7 +525,6 @@ passport.deserializeUser(function(id, done) {
     });
   });
 
-
 // Middleware to set req.isUnauthenticated for the first use of the '/dashboard' URL bar
 app.use('/dashboard', (req, res, next) => {
     // Check if user is Already authenticated
@@ -649,6 +650,15 @@ app.use('/resetPassword', (req, res, next) => {
     next();
 });
 
+// Middleware to set req.isUnauthenticated for the first use of the '/resetPassword' URL bar
+app.use('/test', (req, res, next) => {
+    // Check if user is Already authenticated
+    if (!req.session.isAuthenticated) {
+        req.isUnauthenticated = true;        
+    }
+    next();
+});
+
 /*
 The code app.set('views', './public/views') is used to set the directory where the server
 will look for views/templates to render. The views method is a built-in method of the Express.js
@@ -680,9 +690,6 @@ In this case, the path.join(__dirname, 'public') specifies the directory where t
 are located, which is the public directory located in the same directory as the current file.
 */
 app.use(express.static(path.join(__dirname, 'public')));
-
-
-
 
 /*
     The constant redirectDashboard is a middleware function that checks if the user is already
@@ -721,6 +728,7 @@ app.get('/', (req, res) => {
         res.render('error404');
     }    
 });
+
 
 // User route error403
 app.get('/error403', (req, res) => {
@@ -904,20 +912,20 @@ app.get('/logout', (req, res) => {
 });
 
 // User route login
-app.get('/login2', (req, res) => {
-    console.log('isUnauthenticated: ', req.isUnauthenticated);
+//app.get('/login2', (req, res) => {
+    //console.log('isUnauthenticated: ', req.isUnauthenticated);
     // Check if user already authenticated.
-    if (req.isUnauthenticated) {
-        res.render('login2');
-        console.log('User is not logged into the login2 to reset password webpage!');
-    } else if     
-        (req.session.isAuthenticated) {
-        res.redirect('/resetPassword');
-        console.log('User is has successfully logged into the login2 reset password authentication!');
-    } else {       
-        res.render('error403');
-    }  
-});
+    //if (req.isUnauthenticated) {
+        //res.render('login2');
+        //console.log('User is not logged into the login2 to reset password webpage!');
+    //} else if     
+    //(req.session.isAuthenticated) {
+       // res.redirect('/resetPassword');
+        //console.log('User is has successfully logged into the login2 reset password authentication!');
+   // } else {       
+        //res.render('error403');
+    //}  
+//});
 
 /*
   The constant redirectLogin is a middleware function that checks if the user is logged in by
@@ -951,13 +959,13 @@ app.get('/dashboard', (req, res) => {
     }
 });
 
-app.get('/resetPassword', (req, res) => {
+app.get('/login2', (req, res) => {
     if (req.isAuthenticated()) {
         console.log(req.user);
         console.log('The User had been successfully authenticated within the Session through the passport from reset password webpage!');
-        res.render('resetPassword', { firstName: req.user.firstName, lastName: req.user.lastName});
+        res.render('login2', { firstName: req.user.firstName, lastName: req.user.lastName});
     } else {
-        res.render('resetPassword')
+        res.render('login2')
         console.log('The user is not successfully authenticated within the session through the passport from reset password webpage!');
     }
 });
@@ -983,7 +991,8 @@ SQLite3 query. The query is executed using the db1.run() method, and the results
 returned either as a successful redirect to the login page, or an error page if
 something goes wrong.
 */
-app.post('/signup', async(req, res) => {
+app.post('/signup', 
+    async(req, res) => {
     const firstName = req.body.firstName;
     const lastName = req.body.lastName;
     const userName = req.body.userName;
@@ -1027,7 +1036,12 @@ app.post('/signup', async(req, res) => {
                 console.log(err.message);
                 res.render('error500');
             } else {
-                res.render('login');
+                const data = matchedData(req);
+                console.log("Sanitized: ", data);
+                // Homework: send sanitized data in an email or persist in a db
+
+                req.flash('success', 'Thank you for signup.');
+                res.redirect('/login');
             }
         });
     });   
@@ -1051,7 +1065,7 @@ app.post(
         failureRedirect: '/logout',
         failureFlash: true  
 }));
-
+/*
 app.post(
     '/resetPassword',
     passport.authenticate('local', {
@@ -1059,11 +1073,12 @@ app.post(
         failureRedirect: '/resetPassword',
         failureFlash: true  
 }));
+*/
 
 app.post(
     '/login2',
     passport.authenticate('login2', {
-        successRedirect: '/resetPassword',
+        successRedirect: '/dashboard',
         failureRedirect: '/login2',
         failureFlash: true 
 }));
@@ -1220,81 +1235,102 @@ const email = req.body.email;
 });
 
 
-app.post('/resetPassword', async (req, res) => {
-   const password = req.body.password;
-   const confirmPassword = req.body.confirmPassword; 
+
+function generateNewForgottenPassword() {
+    const salt = bcrypt.genSalt(13);  
+    const passwordHashed = bcrypt.hash(req.body.password, salt); 
+
+    // Hash the confirmPassword field using the same salt, as the password field.
+    const confirmPasswordHashed = bcrypt.hash(req.body.confirmPassword, salt);    
+
+    // Compare the passwordHashed to the confirmPasswordHashed in order ensure they match in values.
+    const passwordsMatch =  bcrypt.compare(passwordHashed, confirmPasswordHashed);
+    if (passwordsMatch) {
+        console.log('The user passwordHashed and confirmPasswordHashed did not match.');
+        //return done(null, false, { message: 'Password do not match.'});
+        //return res.render('signup');    //or res.render('signup', { message: 'Password do not match})
+    } else {
+        console.log('The user passwordHashed and confirmPasswordHashed successfully match, and the user is successfully authenticated to the passport and session.');
+    }   
+
+}
+
+app.post('/login2', async(req, res) => {
+    const email = req.body.email;
+    const temporary_Password = req.body.temporary_Password;
+    const newPassword = req.body.password;
+    const newConfirmPassword = req.body.confirmPassword;
+
+    console.log(req.body);
+    console.log('Updating password fields for user with email:', email);
+    console.log("password:", password);
+    console.log("confirmPassword:", confirmPassword);
+
+    const salt = await bcrypt.genSalt(13);
+    const passwordHashed = (await bcrypt.hash(req.body.password, salt)).toString();
+    const confirmPasswordHashed = (await bcrypt.hash(req.body.password, salt)).toString();
     
-
-   console.log('New password: ' + password);
-   console.log('Confirm password: ' + confirmPassword);
-
-    //Get the authenticated user from the session
-   const user = req.user; 
-
-    console.log('Authenticated user: ' + user);
-
-   // Hash the password field using bcrypt.
-   //const salt = await bcrypt.genSalt(13);  
-   //const passwordHashed = await bcrypt.hash(req.body.password, salt); 
-   bcrypt.hash(password, 13, (err, hash) => {
-    if (err) {
-        console.log('Internal Server Error, 500')
-        return;
-    }
-
- 
-
-   bcrypt.hash(confirmPassword, 13, (err, confirmhash) => {
-    if (err) {
-        console.log('Internal Server Error, 500')
-        return;
-    }
-
-
-
-   // Hash the confirmPassword field using the same salt, as the password field.
-   //const confirmPasswordHashed = await bcrypt.hash(req.body.confirmPassword, salt);
-
-   console.log('New password hash: ' + hash);
-   console.log('New confirm password hash: ' + confirmhash);
-
-   
-   console.log('The user password and confirm password has been hashed and salted.');           
-        
-   db1.run('UPDATE users SET password = ?, confirmPassword = ? WHERE email = ?', [hash, confirmhash, user.email], (err) => {
-
+    // Check if the email exists in the database
+    db1.get('SELECT * FROM users WHERE email = ?', email, (err, row) => {
         if (err) {
-        console.error(err);
-        console.log('The SQlite3 language had not properly execute the UPDATE correctly for the user new password from the reset password.')
-        res.render('error500');
-        } else {
-        // Send the new password to the user's email to nodemailer 
-        //sendEmail(email, 'New password', `Your new password is: ${newPassword}`);
-    
-        console.log('The SQlite3 language had properly execute the UPDATE successfully for the user new password from the reset password webpage.');
+            console.error(err);
+            console.log('SQLite3 language did not successfully execute user/s email address search properly; therefore this error means a JavaScript codes language error.');
+            res.render('error500');
+        }
 
+        if (!row) {
+            res.render('/login2', { error: 'Email not found' });
+            console.log('User/s email was not successfully found onto the SQlite3 database.')
+        }
+        
+        bcrypt.compare(temporary_Password, row.password, (err, result) => {
+            if (err) {
+                console.error(err);
+                return res.status(500).send('Server Error');
+            }
+            if (!result) {
 
-        // Compare the passwordHashed to the confirmPasswordHashed in order ensure they match in values.
-        // const passwordsMatch = bcrypt.compare(passwordHashed, confirmPasswordHashed);
+                return res.render('login2', { error: 'Temporary password is incorrect'})
+            }
+            // check if new password and confirm password match
+            if (password !== confirmPassword) {
+                return res.render('login2', { error: 'New password and confirm password do not match.'});
+            }
 
-       /*
-        if (passwordsMatch) {
-            console.log('The user passwordHashed and confirmPasswordHashed match.');
-            //return done(null, false, { message: 'Password do not match.'});
-                res.redirect('/login');    //or res.render('signup', { message: 'Password do not match})
-        } else {
-            console.log('The user passwordHashed and confirmPasswordHashed did not successfully match due from the password column is use as an temporary password unitil user reset his/her password.');
-            res.render('resetPassword');
-        }  
-        */
+            
 
-    }
+            // update password-related fields in the database
+            /*
+            bcrypt.hash(password, 13, (err, hash) => {
+                if (err) {
+                    console.log(err);
+                    return res.status(500).send('Server Error');                    
+                }
 
-});
+            bcrypt.hash(confirmPassword, 13, (err, confirmhash) => {
+                if (err) {
+                    console.log(err);
+                    return res.status(500).send('Server Error');                    
+                }  
 
-});
+                */
+                
+                // update the password and confirm password fields
+                db1.run('UPDATE users SET newPassword = ?, newConfirmPassword = ? WHERE email = ?', [passwordHashed, confirmPasswordHashed, email], (err) => {
+                    if (err) {
+                        console.log(err);
+                       
+                        return res.status(500).send('Server error');
+                    }
+                    // success
+                    res.redirect('/login');
+                });
+            });        
         
     });
+        
 });
+
+
 
 
