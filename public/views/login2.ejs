@@ -25,6 +25,19 @@
 			<br>
 			<span id="temporary_PasswordErrorMessage"></span>
 			<br>
+			<br>
+			<label for="password">New Password:</label>
+			<input type="password" id="password" size="75" name="password">
+			<br>
+			<span id="passwordErrorMessage"></span>
+			<br>
+			
+			<label for="confirmPassword">Confirm Password:</label>
+			<input type="password" id="confirmPassword" size="75" name="confirmPassword">
+			<br>
+			<span id="confirmPasswordErrorMessage"></span>
+			<br>		
+
 			<button type="submit" >Continue</button>
 		</form>
 		<br>			
@@ -72,7 +85,47 @@
 			
 			return false;
 			
-			}      		
+			}     
+			
+			const password = document.getElementById('password').value.trim();
+
+			if (password === '' || password == null || password.length <= 7 || !password.match(regExPassword)) {
+				document.getElementById('passwordErrorMessage').textContent = 'Your password is a required input field.';
+			
+				setTimeout(function() {
+					document.getElementById('passwordErrorMessage').textContent = '';
+				},
+				9000)
+			
+			return false;
+			
+			}     
+			
+			const confirmPassword = document.getElementById('confirmPassword').value.trim();		
+			
+			if (confirmPassword === '' || confirmPassword == null || confirmPassword.length <= 7 || !confirmPassword.match(regExPassword)) {
+				document.getElementById('confirmPasswordErrorMessage').textContent = 'Your confirm password is a required input field.';
+			
+				setTimeout(function() {
+					document.getElementById('confirmPasswordErrorMessage').textContent = '';
+				},
+				9000)
+			
+			return false;
+			
+			} 
+			
+			if (password != confirmPassword) {
+				document.getElementById('confirmPasswordErrorMessage').textContent = 'Your password does not match to your confirm password which are required input fields.';
+
+				setTimeout(function() {
+					document.getElementById('confirmPasswordErrorMessage').textContent = '';
+				},
+				9000)
+
+				return false;
+
+            }			
 				
 			e.preventDefault();  
 				
