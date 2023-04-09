@@ -5,6 +5,7 @@
 	<meta http-equiv="X-UA-Compatible" content="IE=edge">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<title>Signup</title>
+	<link rel="stylesheet" type="text/css" href="../css/signup.css" />
 </head>
 
 	<body>
@@ -12,38 +13,46 @@
 		<header>
 			<%- include('../common/header') %>
 		</header>	
+		
+		<!--
+		<% if (firstName == '' || firstName == null || firstName.length <= 2) { %>
+			<span><h6 style="color: white; background-color: red; font-family:Cambria, Cochin, Georgia, Times, 'Times New Roman', serif font-size: 12px; ">
+				Your first name is a required input field.
+			<%- firstName %></h6></span>
+		<% } %>
+		-->
 
 		<form action="/signup" onsubmit="return validated()" method="POST" >
-			<label for="first-name">First Name:</label>
-			<input type="text" id="firstname" size="25" name="firstName">
 			<br>
 			<span id="firstNameErrorMessage"></span>
+			<br>			
+			<label for="first-name">First Name:</label>
+			<input type="text" id="firstname" size="25" name="firstName">
 			<br>		
+			<span id="lastNameErrorMessage"></span>
+			<br>
 			<label for="last-name">Last Name:</label>
 			<input type="text" id="lastname" size="25" name="lastName">
 			<br>
-			<span id="lastNameErrorMessage"></span>
+			<span id="usernameErrorMessage"></span>
 			<br>
 			<label for="username">Username:</label>
 			<input type="text" id="username" size="25" name="userName">
 			<br>
-			<span id="usernameErrorMessage"></span>
+			<span id="emailErrorMessage"></span>
 			<br>
 			<label for="email">Email:</label>
 			<input type="email" id="email" size="75" name="email">
 			<br>
-			<span id="emailErrorMessage"></span>
+			<span id="passwordErrorMessage"></span>
 			<br>
 			<label for="password">Password:</label>
 			<input type="password" id="password"  size="75" name="password">
 			<br>
-			<span id="passwordErrorMessage"></span>
-			<br>			
-			<label for="confirmPassword">Confirm Password:</label>
-			<input type="password" id="confirmPassword" size="75" name="confirmPassword">
-			<br>
 			<span id="confirmPasswordErrorMessage"></span>
-			<br>
+			<br>		
+			<label for="confirmPassword">Confirm Password:</label>
+			<input type="password" id="confirmPassword" size="75" name="confirmPassword">	
 			<br>			
 			<input type="hidden" id="temporary_Password" size="75" name="temporary_Password" value="test">
 			<br>
@@ -62,6 +71,21 @@
 		</footer>
 
 		<script type="text/javascript">
+
+
+			document.addEventListener('DOMContentLoaded', () => {
+				const errorMessageElement = document.querySelector('.error');
+
+				if (errorMessageElement.textContent !== '') {
+					setTimeout( () => {
+						errorMessageElement.textContent = '';
+
+					},
+					7000);
+
+				}
+
+			});
 
 			const validated = (e) => { 
 			
@@ -181,7 +205,8 @@
 			
 			} 
 							
-		</script>		
+		</script>
+		
 	</body>
 </html>
 
