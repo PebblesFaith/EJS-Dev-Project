@@ -179,8 +179,6 @@ you can use the db object to query and manipulate the database using the better-
 */
 const db = new sqliteDB('signUpDatabase_Session.db', { verbose: console.log('Session login has been successfully created')});
 
-
-
 /*
 The code const port = 3000; initializes a constant variable named port with the value 3000. This value is
 the port number that the Express.js application will listen on.
@@ -246,9 +244,6 @@ is suitable for simple data structures.
 */
 app.use(express.urlencoded({ extended: false }));
 
-
-
-
 /*
 The code creates a new instance of the SQLite3 Database using the sqlite3 module in JavaScript. 
 The first argument passed to the constructor is the name of the database file to create or 
@@ -302,7 +297,6 @@ db1.serialize(() => {
     )`);
 });
 
-
 /*
 The code app.use(session(...)); is a middleware function that is used in an Express.js application to enable
 and configure session management. It creates and maintains a server-side session store to store session data 
@@ -320,7 +314,7 @@ allows developers to store and retrieve data on a per-session basis to keep trac
 authentication status, and other user-specific information.
 */
 app.use(
-    session({
+    session({   
         store: new Sqlite3SessionStore({
             client: db,
             dir: 'signUpDatabase_Session.db',
@@ -330,7 +324,7 @@ app.use(
                 httpOnly: true,
                 sameSite: true,
                 resave: false,
-                saveUninitialized: true,
+                saveUninitialized: false,
                 maxAge: +SESSION_MAX_AGE // 30 minutes in milliseconds
             }
         }),
@@ -429,6 +423,7 @@ passport.use(
     passReqToCallback: true // To allow request object to be passed to callback
 },   
     async (req, email, password, done) => {
+        console.log('The passport.use name is local1 for the new LocalStrategy login1.')
         console.log('The passport.use email is: ' + email);
         console.log('The passport.use temporary password: ' + password);
         
@@ -478,8 +473,10 @@ passport.use('local2', new LocalStrategy({
     passReqToCallback: true // To allow request object to be passed to callback
 },        
     function(req, email, temporary_Password, done) { 
+        console.log('The passport.use name is local2 for the new LocalStrategy login2.')
         console.log('The passport.use(login2) email is: ' + email);
         console.log('The passport.use(login2) temporary password: ' + temporary_Password);
+        
         db1.get(`SELECT * FROM users WHERE email = ?`, email, (err, row) => {
             if (err) {
                 
@@ -487,6 +484,7 @@ passport.use('local2', new LocalStrategy({
             }
             if (!row) {
                 return done(null, false, { messages: 'You have entered the incorrect email address.'});
+                
             }
 
             bcrypt.compare(temporary_Password, row.temporary_Password, (err, result) => {
@@ -733,6 +731,7 @@ const redirectDashboard = (req, res, next) => {
     }
 }
 
+
 /*
 In the get route of the Express Passport is always established by ways of the ‘req.authenticate’
 method within the request and response function which will authenticate the user sent request within 
@@ -748,14 +747,21 @@ The route handler function checks if the user is authenticated using the req.isA
 method provided by Passport.js. If the user is authenticated, the home template is rendered using the
 res.render() method. If the user is not authenticated, the error404 template is rendered.
 */
+
 app.get('/', (req, res) => { 
     if (req.isUnauthenticated()) {
         console.log('User is not authenticated within the Home page');
         res.render('home');
         
     } else {
-        res.render('error404');
+        res.render('/');
     }    
+});
+
+app.get('/', (req, res) => {
+    console.log('get / req.sessionID: ', req, sessionID);
+    res.send('get index route /');
+
 });
 
 // User route error403
@@ -808,7 +814,7 @@ app.get('/forgotPassword', (req, res) => {
     // Check if user already authenticated.
     if (req.isUnauthenticated) {
         console.log('User had been successfully authenticated within the Session through the passport from forgotPassword webpage!');
-        res.render('forgotPassword');
+        res.render('login2');
     } else {
         // Render signup page for new users
         console.log('User had not been successfully authenticated within the Session through the passport from forgotPassword webpage!');
@@ -862,7 +868,7 @@ app.get('/verifyEmail', (req, res) => {
 });
 
 // User route signup
-app.get('/signup', redirectDashboard, (req, res) => {    
+app.get('/signup', (req, res) => {    
     // Check if user already authenticated.
     if (req.session.isAuthenticated) {
         return alert('You are already logged in!');
@@ -870,8 +876,7 @@ app.get('/signup', redirectDashboard, (req, res) => {
     console.log(req.session);
     // Check if this is the first use of '/signup' route URL bar
     if (req.isUnauthenticated) {
-        const firstName = req.flash('firstName');
-    
+        const firstName = req.flash('firstName');       
         res.render('signup', { firstName });
     } else {
         // Render signup page for new users
@@ -915,7 +920,7 @@ app.delete('/logout', (req, res) => {
    message, and if the user is authenticated, it redirects them to the dashboard and logs another
    message. If neither of these conditions are met, it renders an error403 page.
 */
-app.get('/login', redirectDashboard, (req, res) => {
+app.get('/login', (req, res) => {
     console.log(req.session);
     console.log('isUnauthenticated: ', req.isUnauthenticated);
     // Check if user already authenticated.
@@ -971,7 +976,7 @@ const redirectLogin = (req, res, next) => {
         next();
     }
 }
-
+/*
 const ensureAuthentication = (req, res, next) => {
     if (req.isAuthenticated()) {
         return next();
@@ -979,13 +984,32 @@ const ensureAuthentication = (req, res, next) => {
     res.redirect('/login');
 }
 
+function checkAuthenticated (req, res, next) {
+    if (req.isAuthenticated()) {    
+        return next();
+    }
+    res.redirect('/login');
+}
+*/
+
+function checkNotAuthenticated (req, res, next) {
+    if (req.isAuthenticated()) {    
+        return res.redirect('/');
+    }
+    next();
+    
+}
+
+
+
+
 /*
 The app.get function handles an HTTP GET request to the /dashboard route, with redirectLogin as
 middleware. The function checks if the user is authenticated by calling req.isAuthenticated().
 If the user is authenticated, it renders the dashboard template with user information; otherwise, 
 it renders the login template and logs a message indicating that the user is not authenticated.
 */
-app.get('/dashboard', ensureAuthentication, (req, res, next) => {
+app.get('/dashboard', (req, res, next) => {
     if (req.isAuthenticated) {
         console.log(req.user);
         console.log(req.session);
@@ -997,7 +1021,7 @@ app.get('/dashboard', ensureAuthentication, (req, res, next) => {
     }
 });
 
-app.get('/resetPassword', ensureAuthentication, (req, res, next) => {
+app.get('/resetPassword', (req, res, next) => {
     if (req.isAuthenticated) {
         console.log(req.user);
         console.log(req.session);
@@ -1015,7 +1039,7 @@ app.get('/login2', (req, res) => {
         console.log('Request Session:' + req.session)
         console.log('' + req.logIn);
         console.log('The User had been successfully authenticated within the Session through the passport from reset password webpage!');
-        res.render('login2');
+       
     } else {
         res.render('error500')
        
@@ -1128,7 +1152,7 @@ app.post(
 }));
 
 app.post(
-    '/login2',
+    '/login2', 
     passport.authenticate('local2', {
         successRedirect: '/resetPassword',
         failureRedirect: '/login2',
@@ -1314,8 +1338,8 @@ app.post('/login2',
             } else {            
                
                 console.log('The user\s email address is successfully found within the passport serialization authenticated processes through the session.');
-                req.logOut();
-                res.redirect('/login');
+               
+                res.redirect('/resetPassword');
             }        
         });     
     });
