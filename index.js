@@ -214,7 +214,6 @@ const IONOS_SECRET_KEY = process.env.IONOS_SECRET_KEY;
 const EXPRESS_SESSION_KEY = process.env.EXPRESS_SESSION_KEY;
 const SESSION_MAX_AGE = 30 * 60 * 1000;
 
-
 /*
 The if (process.env.NODE_ !== 'production') block checks whether the application is running in production mode,
 and if not, loads additional environment variables from another .env file. This is a common practice to ensure
@@ -413,7 +412,7 @@ necessary. This code provides a simple but effective way to authenticate users a
 the security of their data.
 */
 passport.use(
-    'local1',
+    'login1',
     new LocalStrategy({
     usernameField: 'email',
     passwordField: 'password',
@@ -462,7 +461,8 @@ passport.use(
     match to the session cookie authentication than the session cookie will not authenticate user
     data information.
     */
-passport.use('login2', new LocalStrategy({
+passport.use(
+    'login2', new LocalStrategy({
     usernameField: 'email',
     passwordField: 'temporary_Password',
    
@@ -477,7 +477,7 @@ passport.use('login2', new LocalStrategy({
                 return done(err);
             }
             if (!row) {
-                return done(null, false, { messages: 'You have entered the incorrect email address.'});
+                return done(null, false, { message: 'You have entered the incorrect email address.'});
             }
 
             bcrypt.compare(temporary_Password, row.temporary_Password, (err, result) => {
@@ -487,7 +487,7 @@ passport.use('login2', new LocalStrategy({
                 }
                 if (!result) {
                     console.log('The email and temporary password are: '  + email + temporary_Password + '.');
-                    return done(null, false, { messages: 'You have entered the incorrect password.'});
+                    return done(null, false, { message: 'You have entered the incorrect temporary password.'});
                 }
                 
                 return done(null, { id: row.id, email: row.email, firstName: row.firstName, lastName: row.lastName, password: row.password, confirmPassword: row.confirmPassword, temporary_Password: row.temporary_Password, isAuthenticated: true });      
@@ -978,6 +978,18 @@ app.get('/dashboard', (req, res) => {
     }
 });
 
+app.get('/resetPassword', (req, res) => {
+    if (req.isAuthenticated) {
+        console.log(req.user);
+        console.log(req.session);
+        console.log('User had been successfully authenticated within the Session through the passport from login2!');
+        res.render('resetPassword', { firstName: req.user.firstName, lastName: req.user.lastName, email: req.user.email});
+    } else if (req.isUnauthenticated) {
+        res.redirect('/login2')
+        console.log('User is not successfully authenticated within the session through the passport from login2!');
+    }
+});
+
 app.get('/login2', (req, res) => {
     if (req.isAuthenticated()) {
         console.log(req.user);
@@ -1082,7 +1094,7 @@ app.post('/signup',
 
 app.post(
     '/login',
-    passport.authenticate('local1', {
+    passport.authenticate('login1', {
         successRedirect: '/dashboard',
         failureRedirect: '/login',
         failureFlash: true  
@@ -1099,7 +1111,7 @@ app.post(
 app.post(
     '/login2',
     passport.authenticate('login2', {
-        successRedirect: '/login',
+        successRedirect: '/resetPassword',
         failureRedirect: '/login2',
         failureFlash: true 
 }));
