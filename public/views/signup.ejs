@@ -14,14 +14,6 @@
 			<%- include('../common/header') %>
 		</header>	
 		
-		<!--
-		<% if (firstName == '' || firstName == null || firstName.length <= 2) { %>
-			<span><h6 style="color: white; background-color: red; font-family:Cambria, Cochin, Georgia, Times, 'Times New Roman', serif font-size: 12px; ">
-				Your first name is a required input field.
-			<%- firstName %></h6></span>
-		<% } %>
-		-->
-
 		<form action="/signup" onsubmit="return validated()" method="POST" >
 			<br>
 			<span id="firstNameErrorMessage"></span>
