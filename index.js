@@ -210,11 +210,9 @@ require('dotenv').config();
 The variables IONOS_SECRET_KEY, EXPRESS_SESSION_KEY, and SESSION_MAX_AGE retrieve the values of environment variables
 with the same names. These values are typically used to configure and customize the behavior of the application.
 */
-
-
 const IONOS_SECRET_KEY = process.env.IONOS_SECRET_KEY;
 const EXPRESS_SESSION_KEY = process.env.EXPRESS_SESSION_KEY;
-const SESSION_MAX_AGE = process.env.SESSION_MAX_AGE;
+const SESSION_MAX_AGE = 30 * 60 * 1000;
 
 
 /*
@@ -283,7 +281,6 @@ This code snippet is commonly used in web development to create a database table
 storing user account information, which can be accessed and manipulated as needed.
 */
 
-
 db1.serialize(() => {
     db1.run(`CREATE TABLE IF NOT EXISTS users (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -314,7 +311,7 @@ allows developers to store and retrieve data on a per-session basis to keep trac
 authentication status, and other user-specific information.
 */
 app.use(
-    session({   
+    session({
         store: new Sqlite3SessionStore({
             client: db,
             dir: 'signUpDatabase_Session.db',
@@ -325,11 +322,11 @@ app.use(
                 sameSite: true,
                 resave: false,
                 saveUninitialized: false,
-                maxAge: +SESSION_MAX_AGE // 30 minutes in milliseconds
+                maxAge: SESSION_MAX_AGE // 30 minutes in milliseconds
             }
         }),
         secret: 'EXPRESS_SESSION_KEY',
-        resave: true,
+        resave: false,
     })
 )
 
@@ -423,7 +420,6 @@ passport.use(
     passReqToCallback: true // To allow request object to be passed to callback
 },   
     async (req, email, password, done) => {
-        console.log('The passport.use name is local1 for the new LocalStrategy login1.')
         console.log('The passport.use email is: ' + email);
         console.log('The passport.use temporary password: ' + password);
         
@@ -466,17 +462,15 @@ passport.use(
     match to the session cookie authentication than the session cookie will not authenticate user
     data information.
     */
-passport.use('local2', new LocalStrategy({
+passport.use('login2', new LocalStrategy({
     usernameField: 'email',
     passwordField: 'temporary_Password',
-       
+   
     passReqToCallback: true // To allow request object to be passed to callback
 },        
     function(req, email, temporary_Password, done) { 
-        console.log('The passport.use name is local2 for the new LocalStrategy login2.')
         console.log('The passport.use(login2) email is: ' + email);
         console.log('The passport.use(login2) temporary password: ' + temporary_Password);
-        
         db1.get(`SELECT * FROM users WHERE email = ?`, email, (err, row) => {
             if (err) {
                 
@@ -484,7 +478,6 @@ passport.use('local2', new LocalStrategy({
             }
             if (!row) {
                 return done(null, false, { messages: 'You have entered the incorrect email address.'});
-                
             }
 
             bcrypt.compare(temporary_Password, row.temporary_Password, (err, result) => {
@@ -492,16 +485,16 @@ passport.use('local2', new LocalStrategy({
                 if (err) {
                     return done(err);
                 }
-              
                 if (!result) {
                     console.log('The email and temporary password are: '  + email + temporary_Password + '.');
                     return done(null, false, { messages: 'You have entered the incorrect password.'});
-                } 
+                }
                 
-                return done(null, { id: row.id, email: row.email, firstName: row.firstName, lastName: row.lastName, password: row.password, confirmPassword: row.confirmPassword, temporary_Password: row.temporary_Password, isAuthenticated: true, isUnauthenticated: false });      
+                return done(null, { id: row.id, email: row.email, firstName: row.firstName, lastName: row.lastName, password: row.password, confirmPassword: row.confirmPassword, temporary_Password: row.temporary_Password, isAuthenticated: true });      
 
             });
-        });  
+        });
+         
     } 
 ));
     
@@ -546,7 +539,7 @@ passport.deserializeUser(function(id, done) {
         return done(err); 
     }
       if (!row) { 
-        return done(null, false ); 
+        return done(null, false); 
     }
       return done(null, { id: row.id, email: row.email, firstName: row.firstName, lastName: row.lastName,password: row.password, confirmPassword: row.confirmPassword, temporary_Password: row.temporary_Password, isAuthenticated: true });
     });
@@ -625,6 +618,7 @@ app.use('/verifyEmail', (req, res, next) => {
 });
 
 // Middleware to set req.isUnauthenticated for the first use of the '/signup' URL bar
+
 app.use('/signup', (req, res, next) => {
     // Check if user is Already authenticated
     if (!req.session.isAuthenticated) {
@@ -731,7 +725,6 @@ const redirectDashboard = (req, res, next) => {
     }
 }
 
-
 /*
 In the get route of the Express Passport is always established by ways of the ‘req.authenticate’
 method within the request and response function which will authenticate the user sent request within 
@@ -747,22 +740,14 @@ The route handler function checks if the user is authenticated using the req.isA
 method provided by Passport.js. If the user is authenticated, the home template is rendered using the
 res.render() method. If the user is not authenticated, the error404 template is rendered.
 */
-
 app.get('/', (req, res) => { 
     if (req.isUnauthenticated()) {
-        console.log('User is not authenticated within the Home page');
         res.render('home');
-        
     } else {
-        res.render('/');
+        res.render('error404');
     }    
 });
 
-app.get('/', (req, res) => {
-    console.log('get / req.sessionID: ', req, sessionID);
-    res.send('get index route /');
-
-});
 
 // User route error403
 app.get('/error403', (req, res) => {
@@ -814,7 +799,7 @@ app.get('/forgotPassword', (req, res) => {
     // Check if user already authenticated.
     if (req.isUnauthenticated) {
         console.log('User had been successfully authenticated within the Session through the passport from forgotPassword webpage!');
-        res.render('login2');
+        res.render('forgotPassword');
     } else {
         // Render signup page for new users
         console.log('User had not been successfully authenticated within the Session through the passport from forgotPassword webpage!');
@@ -868,7 +853,7 @@ app.get('/verifyEmail', (req, res) => {
 });
 
 // User route signup
-app.get('/signup', (req, res) => {    
+app.get('/signup', redirectDashboard, (req, res) => {    
     // Check if user already authenticated.
     if (req.session.isAuthenticated) {
         return alert('You are already logged in!');
@@ -876,12 +861,10 @@ app.get('/signup', (req, res) => {
     console.log(req.session);
     // Check if this is the first use of '/signup' route URL bar
     if (req.isUnauthenticated) {
-        const firstName = req.flash('firstName');       
-        res.render('signup', { firstName });
+        res.render('signup');
     } else {
         // Render signup page for new users
         res.render('signup')
-        //res.render('signup', { firstName: req.user.firstName});
     }  
 });
 
@@ -920,13 +903,13 @@ app.delete('/logout', (req, res) => {
    message, and if the user is authenticated, it redirects them to the dashboard and logs another
    message. If neither of these conditions are met, it renders an error403 page.
 */
-app.get('/login', (req, res) => {
+app.get('/login', redirectDashboard, (req, res) => {
     console.log(req.session);
     console.log('isUnauthenticated: ', req.isUnauthenticated);
     // Check if user already authenticated.
-    if (req.isUnauthenticated) {        
+    if (req.isUnauthenticated) {
         res.render('login');
-        console.log('User has not logged into the dashboard!');
+        console.log('User is not logged into the dashboard!');
     } else if         
         (req.session.isAuthenticated) {
         res.redirect('/dashboard');
@@ -976,32 +959,6 @@ const redirectLogin = (req, res, next) => {
         next();
     }
 }
-/*
-const ensureAuthentication = (req, res, next) => {
-    if (req.isAuthenticated()) {
-        return next();
-    }
-    res.redirect('/login');
-}
-
-function checkAuthenticated (req, res, next) {
-    if (req.isAuthenticated()) {    
-        return next();
-    }
-    res.redirect('/login');
-}
-*/
-
-function checkNotAuthenticated (req, res, next) {
-    if (req.isAuthenticated()) {    
-        return res.redirect('/');
-    }
-    next();
-    
-}
-
-
-
 
 /*
 The app.get function handles an HTTP GET request to the /dashboard route, with redirectLogin as
@@ -1009,7 +966,7 @@ middleware. The function checks if the user is authenticated by calling req.isAu
 If the user is authenticated, it renders the dashboard template with user information; otherwise, 
 it renders the login template and logs a message indicating that the user is not authenticated.
 */
-app.get('/dashboard', (req, res, next) => {
+app.get('/dashboard', (req, res) => {
     if (req.isAuthenticated) {
         console.log(req.user);
         console.log(req.session);
@@ -1021,25 +978,13 @@ app.get('/dashboard', (req, res, next) => {
     }
 });
 
-app.get('/resetPassword', (req, res, next) => {
-    if (req.isAuthenticated) {
-        console.log(req.user);
-        console.log(req.session);
-        console.log('User had been successfully authenticated within the Session through the passport from login2!');
-        res.render('resetPassword', { firstName: req.user.firstName, lastName: req.user.lastName, email: req.user.email});
-    } else if (req.isUnauthenticated) {
-        res.render('/login2')
-        console.log('User is not successfully authenticated within the session through the passport from login2!');
-    }
-});
-
 app.get('/login2', (req, res) => {
     if (req.isAuthenticated()) {
         console.log(req.user);
         console.log('Request Session:' + req.session)
         console.log('' + req.logIn);
         console.log('The User had been successfully authenticated within the Session through the passport from reset password webpage!');
-       
+        res.render('login2');
     } else {
         res.render('error500')
        
@@ -1071,7 +1016,6 @@ something goes wrong.
 
 app.post('/signup', 
     async (req, res) => {
-       
         const firstName = req.body.firstName;
         const lastName = req.body.lastName;
         const userName = req.body.userName;
@@ -1092,13 +1036,14 @@ app.post('/signup',
 
         // User input data information validation.
         if (!firstName || !lastName || !userName|| !email || !password || !confirmPassword) {
-            req.flash('error', 'Please fill in all field');
-            //req.flash('userFirstName', 'Your first name is a required field.')
+            req.flash({message: 'Please fill in all field'});
+          
             return res.redirect('/signup');
         }
         if (password !== confirmPassword) {
             req.flash('error', 'Passwords do not match');
-            return res.redirect('/signup');        
+            return res.redirect('/signup');
+        
 
         } else {
             console.log('The user passwordHashed and confirmPasswordHashed successfully match, and the user is successfully authenticated to the passport and session.');
@@ -1152,18 +1097,10 @@ app.post(
 }));
 
 app.post(
-    '/login2', 
-    passport.authenticate('local2', {
-        successRedirect: '/resetPassword',
+    '/login2',
+    passport.authenticate('login2', {
+        successRedirect: '/login',
         failureRedirect: '/login2',
-        failureFlash: true 
-}));
-
-app.post(
-    '/resetPassword',
-    passport.authenticate('local2', {
-        successRedirect: '/dashboard',
-        failureRedirect: '/resetPassword',
         failureFlash: true 
 }));
 
@@ -1318,13 +1255,26 @@ const email = req.body.email;
 });
 
 app.post('/login2', 
-    (req, res) => {
+    async (req, res) => {
         const email = req.body.email;
         const temporary_Password = req.body.temporary_Password;
-       
-        //console.log('These are the request body' + req.body);    
+        const password = req.body.password;
+        const confirmPassword = req.body.confirmPassword;
+
+        console.log('These are the request body' + req.body);    
         console.log('User email is: ' + email + '.');
-        console.log('User temporary password is: ' + temporary_Password + '.');        
+        console.log('User temporary password is: ' + temporary_Password + '.');
+        console.log('User password is: ' + password + '.');
+        console.log('User confirm password is: ' + confirmPassword + '.');    
+        console.log('The request session: ' + req.session);
+
+        // Hash the password field using bcrypt.
+        const salt = await bcrypt.genSalt(13);  
+        const passwordHashed = await bcrypt.hash(password, salt); 
+
+        // Hash the confirmPassword field using the same salt, as the password field.
+        const confirmPasswordHashed = await bcrypt.hash(confirmPassword, salt); 
+
 
         // Check, if the user's email exists onto the passport serialization through the session.
         db1.get('SELECT * FROM users WHERE email = ?', email, (err, row) => {
@@ -1335,49 +1285,21 @@ app.post('/login2',
             } else if (!row) {
                 console.log('The user\s email address is not successfully found within the passport serialization authenticated processes through the session.');
                 res.render('login2');
-            } else {            
-               
-                console.log('The user\s email address is successfully found within the passport serialization authenticated processes through the session.');
-               
-                res.redirect('/resetPassword');
-            }        
-        });     
-    });
-
-app.post('/resetPassword', 
-    (req, res) => {
-        const password = req.body.password;
-        const confirmPassword = req.body.confirmPassword;  
-        
-        console.log('User password is: ' + password + '.');
-        console.log('User confirm password is: ' + confirmPassword + '.');  
-        console.log('The request session: ' + req.session);  
-
-        // Hash the password field using bcrypt.
-        const salt = bcrypt.hash(13);  
-        const passwordHashed = bcrypt.hash(password, salt).toString(); 
-
-        // Hash the confirmPassword field using the same salt, as the password field.
-        const confirmPasswordHashed =  bcrypt.hash(confirmPassword, salt).toString(); 
-
-        db1.run('UPDATE users SET password = ?, confirmPassword = ? WHERE email = ?', passwordHashed, confirmPasswordHashed, email, (err) => {
-            if (err) {
-                console.error(err);
-                console.log('The user\s passport and session was not successfully executed causing an 500 error message due from Developer\s programmatic coding language problems.');
-                res.render('error500');                     
             } else {
+                
+                db1.run('UPDATE users SET password = ?, confirmPassword = ? WHERE email = ?', passwordHashed, confirmPasswordHashed, row.email, (err) => {
+                    if (err) {
+                        console.error(err);
+                        console.log('The user\s passport and session was not successfully executed causing an 500 error message due from Developer\s programmatic coding language problems.');
+                        res.render('error500');                     
+                    } else {
+                        console.log('The user\s email address is successfully found within the passport serialization authenticated processes through the session.');
+                        res.redirect('/login');
+                    }                  
 
-                console.log('The user\s email address is successfully found within the passport serialization authenticated processes through the session.');
-                req.logOut();
-                res.redirect('/dashboard');
-            }   
-         });
-    });
-
-  
-      
+                });                
+            }
+        });
+});
 
 
-
-
-   
