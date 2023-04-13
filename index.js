@@ -1083,7 +1083,7 @@ app.post('/signup',
             [newUser.firstName, newUser.lastName, newUser.userName, newUser.email, newUser.password, newUser.confirmPassword, newUser.temporary_Password]  
         );
 
-        req.flash('Success', 'You are not registered and can log in');
+        req.flash('Success', 'You are registered and can log in');
         res.redirect('/login');
 
 });
@@ -1287,7 +1287,6 @@ app.post('/login2',
         // Hash the confirmPassword field using the same salt, as the password field.
         const confirmPasswordHashed = await bcrypt.hash(confirmPassword, salt); 
 
-
         // Check, if the user's email exists onto the passport serialization through the session.
         db1.get('SELECT * FROM users WHERE email = ?', email, (err, row) => {
             if (err) {
@@ -1314,4 +1313,53 @@ app.post('/login2',
         });
 });
 
+/* 
+    Sarai Hannah Ajai's JavaScript codes language uses the Express, Passport, Session, Bcrypt, and SQLite3 libraries;
+    in order to handle user authentication and update a user's new password and confirm password. When a user submits
+    the reset password form, the code extracts their email, new password, and confirm password from the request object.
+    It then hashes the new password and confirm password using the Bcrypt library with the same salt value to ensure
+    they can be compared later.
 
+    Her written JavaScript codes language checks whether the hashed password and confirm password match. If they do
+    not match, the code displays an error message to the user. If the new password and confirm password match, the
+    code updates the user's new password and confirm password in the SQLite3 database.
+
+    If an error occurs during the update process, the code logs the error and redirects the user back to the reset
+    password view with an error message. Otherwise, the code redirects the user to the login page, indicating that
+    the new password and confirm password updates were successful.
+
+    Overall, Ms. Ajai's JavaScript codes language ensures that the user's new password and confirm password were
+    securely hashed, and the user's new password and confirm password match before updating the SQLite3 database.
+    This helps to prevent any unauthorized access to the user's account and ensures that their password is kept safe.
+
+    Dated 04-12-23
+
+*/
+app.post('/resetPassword', 
+    async(req, res) => {
+        const userEmail = req.user.email;
+        const newPassword = req.body.password;
+        const confirmNewPassword = req.body.confirmPassword; 
+
+        // Hash the password field using bcrypt.
+        const salt = await bcrypt.genSalt(13);  
+        const passwordHashed = await bcrypt.hash(newPassword, salt);       
+
+        // Hash the confirmPassword field using the same salt, as the password field.
+        const confirmPasswordHashed = await bcrypt.hash(confirmNewPassword, salt);  
+
+        if (passwordHashed !== confirmPasswordHashed) {
+        return res.render('resetPassword', { error: 'New password and confirm password did not match.'});    }
+    
+        // Update the user's password and confirm password in the database.    
+        db1.run('UPDATE users SET password = ?, confirmPassword = ? WHERE email = ?', [passwordHashed, confirmPasswordHashed, userEmail], (err) => {       
+    
+            if (err) {
+                console.error(err.message);
+            return res.redirect('resetPassword', { error: 'An error occurred while updating your new password and confirm password. Please try again.'});
+            }     
+        
+            res.redirect('/login');
+            
+        });
+    });
