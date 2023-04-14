@@ -223,13 +223,6 @@ if (process.env.NODE_ !== 'production') {
     require('dotenv').config();
 }
 
-/*
-The code app.use(express.json()); is a middleware function that is used in an Express.js application.
-It enables the application to parse incoming requests with JSON payloads, which are commonly used for
-RESTful APIs. This middleware adds the parsed JSON data to the request object of the application, allowing
-it to be accessed and used by subsequent middleware functions or route handlers.
-*/
-app.use(express.json());
 
 /*
 The code app.use(express.urlencoded({ extended: false })); is a middleware function that is used in
@@ -240,6 +233,16 @@ The extended option is set to false to use the Node.js built-in querystring libr
 is suitable for simple data structures.
 */
 app.use(express.urlencoded({ extended: false }));
+
+/*
+The code app.use(express.json()); is a middleware function that is used in an Express.js application.
+It enables the application to parse incoming requests with JSON payloads, which are commonly used for
+RESTful APIs. This middleware adds the parsed JSON data to the request object of the application, allowing
+it to be accessed and used by subsequent middleware functions or route handlers.
+*/
+app.use(express.json());
+
+
 
 /*
 The code creates a new instance of the SQLite3 Database using the sqlite3 module in JavaScript. 
@@ -861,10 +864,12 @@ app.get('/signup', redirectDashboard, (req, res) => {
     console.log(req.session);
     // Check if this is the first use of '/signup' route URL bar
     if (req.isUnauthenticated) {
-        res.render('signup');
+        console.log(req.flash());
+        res.render('signup', { messages: (req.flash()) })        
+        
     } else {
-        // Render signup page for new users
-        res.render('signup')
+        console.log(req.flash());        
+       
     }  
 });
 
@@ -929,22 +934,6 @@ app.get('/logout', (req, res) => {
         res.render('error404');
     }  
 });
-
-// User route login
-//app.get('/login2', (req, res) => {
-    //console.log('isUnauthenticated: ', req.isUnauthenticated);
-    // Check if user already authenticated.
-    //if (req.isUnauthenticated) {
-        //res.render('login2');
-        //console.log('User is not logged into the login2 to reset password webpage!');
-    //} else if     
-    //(req.session.isAuthenticated) {
-       // res.redirect('/resetPassword');
-        //console.log('User is has successfully logged into the login2 reset password authentication!');
-   // } else {       
-        //res.render('error403');
-    //}  
-//});
 
 /*
   The constant redirectLogin is a middleware function that checks if the user is logged in by
@@ -1048,12 +1037,12 @@ app.post('/signup',
 
         // User input data information validation.
         if (!firstName || !lastName || !userName|| !email || !password || !confirmPassword) {
-            req.flash({message: 'Please fill in all field'});
-          
+            req.flash('error', 'Please fill in all field');
             return res.redirect('/signup');
+            
         }
         if (password !== confirmPassword) {
-            req.flash('error', 'Passwords do not match');
+            req.flash('error', 'Password and confirm password do not match.');
             return res.redirect('/signup');
         
 
