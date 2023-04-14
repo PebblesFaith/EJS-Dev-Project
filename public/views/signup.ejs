@@ -13,7 +13,7 @@
 		<header>
 			<%- include('../common/header') %>
 		</header>	
-		
+
 		<form action="/signup" onsubmit="return validated()" method="POST" >
 			<br>
 			<span id="firstNameErrorMessage"></span>
@@ -80,7 +80,7 @@
 			});
 
 			const validated = (e) => { 
-			
+		
 			const regExName = /^[A-Za-z\s]+$/;
 			
 			const firstName = document.getElementById('firstname').value.trim();
@@ -189,7 +189,7 @@
 			return false;				
 			
 			}		
-							
+					
 			e.preventDefault();  
 				
 			form.addEventListener('submit', validated);
