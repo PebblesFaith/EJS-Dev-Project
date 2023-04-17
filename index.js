@@ -736,21 +736,6 @@ request property (data information is sent to the SQLites3 database) such as, th
 address and password is set through the login session is established. 
 */
 
-/*
-The code app.get('/', (req, res) => {...} sets up a route for the root URL of the Express.js application.
-
-The route handler function checks if the user is authenticated using the req.isAuthenticated()
-method provided by Passport.js. If the user is authenticated, the home template is rendered using the
-res.render() method. If the user is not authenticated, the error404 template is rendered.
-*/
-app.get('/', (req, res) => { 
-    if (req.isUnauthenticated()) {
-        res.render('home');
-    } else {
-        res.render('error404');
-    }    
-});
-
 
 // User route error403
 app.get('/error403', (req, res) => {
@@ -825,8 +810,8 @@ app.get('/forgotUsername', (req, res) => {
     }  
 });
 
-// User route forgotUsername
-app.get('/home', (req, res) => {
+// User route /
+app.get('/', (req, res) => {
     // Check if user already authenticated.
     if (req.session.isAuthenticated) {
         return alert('You are already logged in!');
@@ -840,15 +825,15 @@ app.get('/home', (req, res) => {
     }  
 });
 
-// User route verifyEmail
-app.get('/verifyEmail', (req, res) => {
+// User route home
+app.get('/home', (req, res) => {
     // Check if user already authenticated.
     if (req.session.isAuthenticated) {
         return alert('You are already logged in!');
     }
-    // Check if this is the first use of '/verifyEmail' route URL bar
+    // Check if this is the first use of '/home' route URL bar
     if (req.isUnauthenticated) {
-        res.render('verifyEmail');
+        res.render('home');
     } else {
         // Render signup page for new users
         res.render('error404')
@@ -1037,14 +1022,14 @@ app.post('/signup',
 
         // User input data information validation.
         if (!firstName || !lastName || !userName|| !email || !password || !confirmPassword) {
-            req.flash('error', 'Please fill in all field');
-            return res.redirect('/signup');
-            
-        }
+            req.flash('error', 'Please fill in all fields');
+            return res.redirect('/signup');           
+        
+        } 
+
         if (password !== confirmPassword) {
             req.flash('error', 'Password and confirm password do not match.');
-            return res.redirect('/signup');
-        
+            return res.redirect('/signup');        
 
         } else {
             console.log('The user passwordHashed and confirmPasswordHashed successfully match, and the user is successfully authenticated to the passport and session.');
@@ -1077,9 +1062,32 @@ app.post('/signup',
 
 });
 
-// When the user login from using the middleware function that checks, if the user
-// is already authenticated or not authenticated is causing the middleware
-// to set to false from the above middleware.
+/*
+    1. When a POST request is made to the '/login' route of the app, the function specified by
+    the passport.authenticate method will be called. This function is responsible for authenticating
+    the user attempting to log in.
+
+    2. The passport.authenticate function takes two arguments: the first argument is the name of
+       the authentication strategy to use, which in this case is 'login1'. The second argument is
+       an object that specifies the options for the authentication strategy.
+
+    3. The options object has three properties:
+        a. The successRedirect property specifies the URL to redirect the user to if authentication
+           is successful. In this case, the user will be redirected to '/dashboard'.    
+        b. The failureRedirect property specifies the URL to redirect the user to if authentication
+           fails. In this case, the user will be redirected back to '/login'.
+        c. The failureFlash property is a boolean that specifies whether to flash a message to the 
+           user if authentication fails. If set to true, a message will be flashed to the user.
+
+    4. If authentication is successful, the user will be redirected to the '/dashboard' route.
+
+    5. If authentication fails, the user will be redirected back to the '/login' route.
+
+    6. If the failureFlash option is set to true and authentication fails, a message will be flashed
+       to the user indicating that authentication failed.
+
+     The rules applies to all the other app.posts' authentication.  
+*/
 
 app.post(
     '/login',
@@ -1104,6 +1112,30 @@ app.post(
         failureRedirect: '/login2',
         failureFlash: true 
 }));
+
+/*
+    The code defines a function called generateNewPassword() that generates a new random
+    password string. Here is the programmatic logic behind it:
+
+    1. Declare a constant length equal to 20, which represents the length of the new password.
+    2. Declare a constant charset which contains all the characters that can be used to
+       generate the password. This includes lowercase and uppercase letters, numbers, and special characters.
+    3. Declare a variable newPassword as an empty string to store the generated password.
+    4. Start a for loop that iterates length times. In each iteration, do the following:
+        a. Generate a random index between 0 and the length of charset using 
+           Math.floor(Math.random() * n), where n is the length of charset.
+        b. Use charAt() method to retrieve the character at the generated index from charset.
+        c. Append the retrieved character to the newPassword variable.
+    5. After the for loop completes, return the generated newPassword string.
+
+    In summary, the function generates a new random password by selecting random characters
+    from a predefined set of characters (i.e. charset) and concatenating them to form a password
+    of length 20.
+
+    Here is a caveat for you. If the new random password string does not contain one number when
+    sent to the user email address from nodemailer than then resetPassword.ejs file will alert
+    the user of a password error.
+*/
 
 function generateNewPassword() {
     const length = 20;
@@ -1254,6 +1286,21 @@ const email = req.body.email;
         }
     });
 });
+
+/*
+    1. The code shows a JavaScript Express route for a POST request to '/login2', which handles user
+       login information submitted via a form.
+    2. The code uses the async/await syntax to handle the asynchronous operations in a synchronous
+       manner, making the code easier to read and maintain.
+    3. The code retrieves the email, temporary password, password, and confirm password fields from 
+       the request body using the req.body object.
+    4. The code then hashes the password and confirm password fields using the bcrypt library, with
+       the same salt value to ensure consistent hashing.
+    5. Finally, the code performs a database query to check if the user's email exists, and if so,
+       updates the user's password and confirm password fields with the hashed values, and redirects
+       the user to the '/login' route upon success. If there is an error with the database query, the
+       code renders an error500 page.
+*/
 
 app.post('/login2', 
     async (req, res) => {
