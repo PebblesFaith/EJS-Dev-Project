@@ -422,8 +422,8 @@ passport.use(
     passReqToCallback: true // To allow request object to be passed to callback
 },   
     async (req, email, password, done) => {
-        console.log('The passport.use email is: ' + email);
-        console.log('The passport.use temporary password: ' + password);
+        console.log('The passport.use(login1) email is: ' + email);
+        console.log('The passport.use(login1) password: ' + password);
         
         if (!password) {
             console.log('User password enter onto the login field:' + password);            
